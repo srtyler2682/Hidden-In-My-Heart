@@ -240,6 +240,10 @@ textarea.recite:focus{border-color:var(--accent);outline:none}
 .swatch i{width:26px;height:26px;border-radius:50%;flex:none;border:2px solid var(--surface)}
 .swatch[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 #addForm input,#addForm textarea{width:100%}
+.vc-r{display:flex;align-items:center;gap:4px}
+.vc-r .btn.small{min-height:36px;padding:4px 10px}
+#editSheet{position:fixed;inset:0;z-index:46;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+#editSheet textarea{min-height:220px}
 .mine{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.03em}
 </style>
 
@@ -275,6 +279,18 @@ html,body{overscroll-behavior-y:none}
 </div>
 
 <input type="file" id="restoreIn" accept=".json,application/json" hidden>
+<div id="editSheet" hidden role="dialog" aria-labelledby="edTitle">
+  <div class="s-top"><button class="x" id="edClose" aria-label="Close without saving"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="g-title"><span class="r" id="edTitle"></span><span class="note">Your progress stays the same.</span></div></div>
+  <div class="s-body"><div class="s-inner set">
+    <div class="set" id="edRefRow"><label class="h" for="edRef">Reference</label><input id="edRef" class="name-in" autocomplete="off"><label class="h" for="edTr">Translation (optional)</label><input id="edTr" class="name-in" autocomplete="off"></div>
+    <label class="h" for="edText">Verse wording</label>
+    <textarea id="edText" class="recite" spellcheck="true"></textarea>
+    <p class="note">Each line is one phrase, the way it’s split up in exercises and the tune. Change any words you like, for example “Yahweh” to “the Lord”.</p>
+    <p class="note" id="edMsg" aria-live="polite"></p>
+    <div class="row"><button class="btn primary" id="edSave">Save wording</button><button class="btn quiet" id="edCancel">Cancel</button></div>
+    <div id="edOrigRow"><button class="btn small quiet" id="edOrig">Go back to the original wording</button></div>
+  </div></div>
+</div>
 <div id="sing" hidden>
   <div class="s-top">
     <button class="x" id="gClose" aria-label="Close sing-along"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -344,6 +360,7 @@ const VERSES=[
  {id:'1jn1-9',ref:'1 John 1:9',tag:'Forgiveness',chunks:['If we confess our sins,','he is faithful and righteous','to forgive us the sins','and to cleanse us from all unrighteousness.']},
  {id:'1jn4-19',ref:'1 John 4:19',tag:'First loved',chunks:['We love him,','because he first loved us.']}
 ];
+const ORIG=Object.fromEntries(VERSES.map(v=>[v.id,v.chunks.slice()]));
 const STRENGTH=['','New','Growing','Steady','Strong','Rooted','Hidden in heart'];
 const INTERVAL=[0,1,2,4,7,14,30,60,90];
 const STOP=new Set('the a an and of to in that for he him his i me my is so be with we us you your it its who which has have all but not are was set by on at as do can will shall our lets this from into also'.split(' '));
@@ -360,7 +377,7 @@ const pick=(a,n,r)=>shuffle(a,r).slice(0,n);
 function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
 const close=(a,b)=>{a=norm(a);b=norm(b);return a===b||(b.length>=5&&lev(a,b)<=1)};
 function splitTok(t){const m=t.match(/^([^A-Za-z0-9]*)(.*?)([^A-Za-z0-9]*)$/);return{pre:m[1],core:m[2],post:m[3]}}
-const VCACHE={};
+const VCACHE={},TUNES={},SYL={};
 function V(id){return VERSES.find(v=>v.id===id)}
 function words(v){if(VCACHE[v.id])return VCACHE[v.id];const out=[];v.chunks.forEach((c,ci)=>c.split(' ').forEach(t=>{const s=splitTok(t);out.push({t,ci,...s,n:norm(s.core)})}));return VCACHE[v.id]=out}
 const isContent=w=>w.n.length>=3&&!STOP.has(w.n);
@@ -372,16 +389,19 @@ const pd=s=>new Date(s+'T12:00:00');
 const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ymd(d)};
 const diffDays=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
 const KEY='hidden-in-my-heart-v1';
-function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},retired:{},second:[],custom:[],settings:{palette:'evergreen',mode:'auto',music:true,autoplay:false,tempo:'normal',size:'large'}}}
+function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},retired:{},second:[],custom:[],edits:{},settings:{palette:'evergreen',mode:'auto',music:true,autoplay:false,tempo:'normal',size:'large'}}}
 /* Your own verses live in progress data; this keeps the verse list in step with it. */
 function syncCustom(list){for(let i=VERSES.length-1;i>=0;i--)if(VERSES[i].custom)VERSES.splice(i,1);(Array.isArray(list)?list:[]).forEach(c=>{if(c&&c.id&&c.ref&&Array.isArray(c.chunks)&&c.chunks.length)VERSES.push({...c,custom:true})})}
 function normalize(st){if(!st||typeof st!=='object'||!st.start){syncCustom([]);return fresh()}
   syncCustom(st.custom);
   st.settings=Object.assign(fresh().settings,st.settings||{});
   st.order=(Array.isArray(st.order)?st.order:[]).filter(id=>V(id));VERSES.forEach(v=>{if(!st.order.includes(v.id))st.order.push(v.id)});
-  ['srs','log','weekDays','weekCheck','retired'].forEach(k=>{if(!st[k]||typeof st[k]!=='object')st[k]={}});
+  ['srs','log','weekDays','weekCheck','retired','edits'].forEach(k=>{if(!st[k]||typeof st[k]!=='object')st[k]={}});
   ['second','custom'].forEach(k=>{if(!Array.isArray(st[k]))st[k]=[]});
-  if(typeof st.offset!=='number')st.offset=0;return st}
+  if(typeof st.offset!=='number')st.offset=0;applyEdits(st);return st}
+/* Your wording changes. Progress is stored by verse, not by words, so editing never touches it. */
+function clearVerseCaches(){[VCACHE,TUNES,SYL].forEach(c=>Object.keys(c).forEach(k=>delete c[k]))}
+function applyEdits(st){VERSES.forEach(v=>{if(!v.custom){const e=st&&st.edits&&st.edits[v.id];v.chunks=(Array.isArray(e)&&e.length?e:ORIG[v.id]).slice()}});clearVerseCaches()}
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
 state=normalize(state);
@@ -413,13 +433,13 @@ const IC={
  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>',
  save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>',
  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
 };
 
 /* ---------- Melody engine (Web Audio) ---------- */
-let AC=null,PLAY=null;const TUNES={};
+let AC=null,PLAY=null;
 function ac(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(e){return null}}
-const SYL={};
 const BLENDS=['bl','cl','fl','gl','pl','sl','br','cr','dr','fr','gr','pr','tr','st','wr','qu'];
 function sylls(word){const lw=word.toLowerCase();if(lw.replace(/[^a-z]/g,'').length<=3)return[word];
   const isV=i=>{const c=lw[i];if('aeiou'.includes(c))return true;return c==='y'&&i>0&&!'aeiou'.includes(lw[i-1])};
@@ -726,6 +746,27 @@ $('#sing').addEventListener('click',e=>{const b=e.target.closest('[data-ground],
   else{state.settings.tempo=b.dataset.gspeed;save();if(G.playing){G.playing=false;stopAll();drawSing()}else drawSingCtrl()}});
 document.addEventListener('keydown',e=>{if(G&&e.key==='Escape')closeSing()});
 
+/* ---------- Edit a verse's wording ---------- */
+let EDIT_ID=null;
+function openEdit(id){const v=V(id);if(!v)return;stopAll();EDIT_ID=id;
+  $('#edTitle').textContent='Edit '+v.ref;$('#edText').value=v.chunks.join('\n');$('#edMsg').textContent='';
+  $('#edRefRow').hidden=!v.custom;if(v.custom){$('#edRef').value=v.ref;$('#edTr').value=v.trans||''}
+  $('#edOrigRow').hidden=v.custom||!state.edits[id];
+  $('#editSheet').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>$('#edText').focus({preventScroll:true}),60)}
+function closeEdit(){EDIT_ID=null;$('#editSheet').hidden=true;document.body.style.overflow=''}
+function saveEdit(){const id=EDIT_ID,v=V(id);if(!v)return closeEdit();
+  const lines=$('#edText').value.split(/\n+/).map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean);
+  if(lines.join(' ').split(' ').length<2){$('#edMsg').textContent='The verse needs at least a couple of words.';return}
+  const chunks=lines.length>1?lines:phraseSplit(lines[0]);
+  if(v.custom){const c=state.custom.find(c=>c.id===id);if(c){c.chunks=chunks;const r=$('#edRef').value.trim();if(r)c.ref=r.slice(0,60);c.trans=$('#edTr').value.trim().slice(0,30);c.tag=c.trans||'Your verse'}syncCustom(state.custom)}
+  else if(chunks.join('\n')===ORIG[id].join('\n'))delete state.edits[id];else state.edits[id]=chunks;
+  applyEdits(state);save();closeEdit();const y=scrollY;render();scrollTo(0,y);toast('Saved. Your progress is unchanged.')}
+$('#edSave').addEventListener('click',saveEdit);
+$('#edCancel').addEventListener('click',closeEdit);
+$('#edClose').addEventListener('click',closeEdit);
+$('#edOrig').addEventListener('click',()=>{if(!EDIT_ID)return;delete state.edits[EDIT_ID];applyEdits(state);save();closeEdit();const y=scrollY;render();scrollTo(0,y);toast('Back to the original wording.')});
+document.addEventListener('keydown',e=>{if(EDIT_ID&&e.key==='Escape')closeEdit()});
+
 /* ---------- Name & backup ---------- */
 function welcomeHTML(){return `<div class="card" id="welcome"><h3>Welcome! What’s your first name?</h3><p class="note">It’s only used in your greeting, and it stays on this device.</p><div class="row"><input id="nameIn" class="name-in" placeholder="Your first name" autocomplete="given-name"><button class="btn primary" data-name-save>Save</button></div><div><button class="btn small quiet" data-name-skip>Skip</button></div></div>`}
 function setName(n){state.name=String(n||'').trim().slice(0,40);save();render()}
@@ -823,7 +864,7 @@ function homeHTML(){const t=today(),{w,day}=weekPos(),wv=weekVerse(),practiced=s
   const revCount=items.filter(x=>x.review).length,mins=Math.max(2,Math.round(items.length*0.65));
   const learned=learnedIds();
   return `<section class="hello"><p class="eyebrow fit" data-fit="${esc(JSON.stringify(dateLines(t,w,day,!!wv)))}"></p><h1>${esc(greet)}</h1></section>${state.name===undefined?welcomeHTML():''}
-  ${wv?`<article class="card" id="homeVerse"><div class="vc-head"><span class="chip">This week’s verse</span><span class="tag">${esc(wv.tag)}</span></div>
+  ${wv?`<article class="card" id="homeVerse"><div class="vc-head"><span class="chip">This week’s verse</span><span class="vc-r"><span class="tag">${esc(wv.tag)}</span><button class="btn small quiet" data-edit="${wv.id}">${IC.pen}<span>Edit</span></button></span></div>
     <h2 class="ref">${esc(wv.ref)}</h2>
     <div class="veil ${day>=3&&!done?'on':''}">${verseHTML(wv)}<button class="btn unveil" data-unveil>${IC.eye}<span>Try to recall it, then show</span></button></div>
     <div class="row"><button class="btn needs-music" data-tune="${wv.id}">${IC.note}<span>Play the tune</span></button><button class="btn needs-music" data-sing="${wv.id}">${IC.mic}<span>Sing along</span></button><button class="btn needs-tts" data-say="${wv.id}">${IC.speak}<span>Read it to me</span></button></div>
@@ -846,8 +887,8 @@ function versesHTML(){const{w}=weekPos(),learned=learnedIds(),wv=weekVerse();
   ${ADD_OPEN?addFormHTML():`<div><button class="btn" data-add-open>${IC.plus}<span>Add your own verse</span></button></div>`}
   <div class="list">${state.order.map((id,i)=>{const v=V(id),isCur=wv&&wv.id===id,isL=learned.includes(id);
     const chip=state.nextUp?.id===id?'<span class="chip gold">Starts tomorrow</span>':state.second.some(x=>x.id===id)?'<span class="chip gold">Also practicing</span>':isCur?'<span class="chip">This week</span>':isL?(state.retired[id]?'<span class="chip muted">Reviews paused</span>':'<span class="chip gold">Keeping fresh</span>'):`<span class="chip muted">Week ${i+1}</span>`;
-    return `<div class="item"><span class="t">${esc(v.ref)}</span>${chip}<span class="s">${v.custom?`<span class="mine">YOUR VERSE${v.trans?' · '+esc(v.trans):''}</span><br>`:''}${esc(v.chunks[0].replace(/[“”]/g,''))} …</span>${isL?strengthHTML(id):''}${DEL_ID===id?`<div class="confirm" style="grid-column:1/-1"><span>Remove ${esc(v.ref)} and its progress?</span><button class="btn small danger" data-del-yes="${id}">Remove</button><button class="btn small" data-del-no>Cancel</button></div>`:''}
-     <div class="acts"><button class="btn small needs-music" data-tune-solo="${id}">${IC.note}<span>Tune</span></button><button class="btn small needs-music" data-sing="${id}">${IC.mic}<span>Sing along</span></button><button class="btn small" data-extra="${id}">${isL||isCur?'Practice':'Preview'}</button>${isL?`<button class="btn small quiet" data-retire="${id}">${state.retired[id]?'Resume reviews':'Stop reviewing'}</button>`:''}${!isL&&!isCur?(state.nextUp?.id===id?`<button class="btn small quiet" data-nextup-cancel>Cancel</button>`:`<button class="btn small quiet" data-nextup="${id}">Start this verse tomorrow</button>`):''}${v.custom?`<button class="btn small quiet danger" data-del="${id}">Remove</button>`:''}</div></div>`}).join('')}</div>`}
+    return `<div class="item"><span class="t">${esc(v.ref)}</span>${chip}<span class="s">${!v.custom&&state.edits[id]?`<span class="mine">YOUR WORDING</span><br>`:''}${v.custom?`<span class="mine">YOUR VERSE${v.trans?' · '+esc(v.trans):''}</span><br>`:''}${esc(v.chunks[0].replace(/[“”]/g,''))} …</span>${isL?strengthHTML(id):''}${DEL_ID===id?`<div class="confirm" style="grid-column:1/-1"><span>Remove ${esc(v.ref)} and its progress?</span><button class="btn small danger" data-del-yes="${id}">Remove</button><button class="btn small" data-del-no>Cancel</button></div>`:''}
+     <div class="acts"><button class="btn small needs-music" data-tune-solo="${id}">${IC.note}<span>Tune</span></button><button class="btn small needs-music" data-sing="${id}">${IC.mic}<span>Sing along</span></button><button class="btn small" data-extra="${id}">${isL||isCur?'Practice':'Preview'}</button><button class="btn small quiet" data-edit="${id}">${IC.pen}<span>Edit</span></button>${isL?`<button class="btn small quiet" data-retire="${id}">${state.retired[id]?'Resume reviews':'Stop reviewing'}</button>`:''}${!isL&&!isCur?(state.nextUp?.id===id?`<button class="btn small quiet" data-nextup-cancel>Cancel</button>`:`<button class="btn small quiet" data-nextup="${id}">Start this verse tomorrow</button>`):''}${v.custom?`<button class="btn small quiet danger" data-del="${id}">Remove</button>`:''}</div></div>`}).join('')}</div>`}
 
 function settingsHTML(){const st=state.settings,{w,day}=weekPos();
   const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-set="${key}" data-val="${v}" aria-pressed="${String(st[key])===String(v)}">${l}</button>`).join('')}</div>`;
@@ -870,6 +911,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el
   if(d.tab){TAB=d.tab;render();return}
   if(G)return;
   if(d.sing){openSing(d.sing);return}
+  if(d.edit){openEdit(d.edit);return}
   if(d.addOpen!==undefined){ADD_OPEN=true;render();setTimeout(()=>$('#addRef')&&$('#addRef').focus(),50);return}
   if(d.addCancel!==undefined){ADD_OPEN=false;render();return}
   if(d.addSave!==undefined){addCustom();return}
@@ -905,7 +947,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el
   if(d.dev==='week'){const{day}=weekPos();state.offset+=7-day;save();render();toast('Moved to the start of next week.');return}
   if(d.dev==='real'){state.offset=0;save();render();return}
   if(d.dev==='reset'){$('#resetConfirm').innerHTML='<div class="confirm"><span>Erase all progress and start over at week 1?</span><button class="btn small danger" data-dev="reset-yes">Erase</button><button class="btn small" data-dev="reset-no">Cancel</button></div>';return}
-  if(d.dev==='reset-yes'){syncCustom([]);state=fresh();save();render();toast('Progress reset.');return}
+  if(d.dev==='reset-yes'){syncCustom([]);state=fresh();applyEdits(state);save();render();toast('Progress reset.');return}
   if(d.dev==='reset-no'){$('#resetConfirm').innerHTML='';return}
 });
 
