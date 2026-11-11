@@ -1,5 +1,5 @@
 // Keeps the app working offline. Bump VERSION when icons or the manifest change.
-const VERSION = 'hidden-heart-v1';
+const VERSION = 'hidden-heart-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

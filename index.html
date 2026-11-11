@@ -51,6 +51,7 @@ p{margin:0}
 .eyebrow{font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .hello{display:flex;flex-direction:column;gap:4px}
 .hello h1{font-size:1.6rem}
+.fit{white-space:nowrap;overflow:hidden;text-overflow:clip;max-width:100%}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px}
 .vc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .chip{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:.03em}
@@ -215,7 +216,31 @@ textarea.recite:focus{border-color:var(--accent);outline:none}
 .g-ctrl .btn.primary{flex:1;min-width:150px}
 .g-opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 @media (prefers-reduced-motion:reduce){.lline,.sy{transition:none}}
+#welcome h3{font-size:1.15rem}
+.name-in{flex:1;min-width:0;min-height:48px;font:inherit;font-size:1.05rem;padding:8px 12px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+.name-in:focus{border-color:var(--accent);outline:none}
+.nudge{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:.88rem}
+.nudge svg{width:16px;height:16px;flex:none}
+.nudge>span{flex:1 1 12em;min-width:0}
+.linkish{background:none;border:0;padding:4px 2px;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:3px;font-size:inherit}
 @media (max-width:420px){ .lyrics{font-size:1.3rem} .day i{width:30px;height:30px} .ref{font-size:1.35rem} .verse{font-size:1.12rem} }
+
+/* Color themes (Settings → Color theme). Evergreen is the default set at the top. */
+:root[data-palette="sunset"]{--bg:#FBF4EA;--surface:#FFFFFF;--surface-2:#F3E6D3;--ink:#2A1D12;--muted:#6E5A47;--line:#E7D5BE;--accent:#B85C0C;--accent-ink:#FFFFFF;--accent-soft:#FBE3C7;--gold:#C2410C;--gold-soft:#FDE1D3}
+@media (prefers-color-scheme: dark){:root[data-palette="sunset"]:not([data-theme="light"]){--bg:#17110C;--surface:#221912;--surface-2:#2E2219;--ink:#F5EBDD;--muted:#B9A58E;--line:#3E3025;--accent:#F5A524;--accent-ink:#1E1206;--accent-soft:#45300F;--gold:#FB8A5C;--gold-soft:#4A2516;color-scheme:dark}}
+:root[data-palette="sunset"][data-theme="dark"]{--bg:#17110C;--surface:#221912;--surface-2:#2E2219;--ink:#F5EBDD;--muted:#B9A58E;--line:#3E3025;--accent:#F5A524;--accent-ink:#1E1206;--accent-soft:#45300F;--gold:#FB8A5C;--gold-soft:#4A2516;color-scheme:dark}
+:root[data-palette="ocean"]{--bg:#EEF3F8;--surface:#FFFFFF;--surface-2:#E0E9F2;--ink:#14202E;--muted:#4F6072;--line:#CBD7E4;--accent:#1F5F99;--accent-ink:#FFFFFF;--accent-soft:#D5E5F5;--gold:#A8701A;--gold-soft:#F5E6C8}
+@media (prefers-color-scheme: dark){:root[data-palette="ocean"]:not([data-theme="light"]){--bg:#0E141B;--surface:#172029;--surface-2:#212C37;--ink:#E6EDF4;--muted:#9AAABA;--line:#2D3A47;--accent:#6FB1EA;--accent-ink:#05121F;--accent-soft:#1A3550;--gold:#E3AE4E;--gold-soft:#3A2E17;color-scheme:dark}}
+:root[data-palette="ocean"][data-theme="dark"]{--bg:#0E141B;--surface:#172029;--surface-2:#212C37;--ink:#E6EDF4;--muted:#9AAABA;--line:#2D3A47;--accent:#6FB1EA;--accent-ink:#05121F;--accent-soft:#1A3550;--gold:#E3AE4E;--gold-soft:#3A2E17;color-scheme:dark}
+:root[data-palette="lavender"]{--bg:#F3F0F7;--surface:#FFFFFF;--surface-2:#E7E1EF;--ink:#221B2C;--muted:#5F566D;--line:#D8D0E3;--accent:#6B4C9A;--accent-ink:#FFFFFF;--accent-soft:#E6DCF3;--gold:#A8701A;--gold-soft:#F5E6C8}
+@media (prefers-color-scheme: dark){:root[data-palette="lavender"]:not([data-theme="light"]){--bg:#13101A;--surface:#1D1826;--surface-2:#282232;--ink:#EEE9F4;--muted:#A99FB8;--line:#352E40;--accent:#B79BE6;--accent-ink:#160E24;--accent-soft:#33274A;--gold:#E3AE4E;--gold-soft:#3A2E17;color-scheme:dark}}
+:root[data-palette="lavender"][data-theme="dark"]{--bg:#13101A;--surface:#1D1826;--surface-2:#282232;--ink:#EEE9F4;--muted:#A99FB8;--line:#352E40;--accent:#B79BE6;--accent-ink:#160E24;--accent-soft:#33274A;--gold:#E3AE4E;--gold-soft:#3A2E17;color-scheme:dark}
+.swatches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.swatch{display:flex;align-items:center;gap:10px;min-height:50px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-weight:700;text-align:left}
+.swatch i{width:26px;height:26px;border-radius:50%;flex:none;border:2px solid var(--surface)}
+.swatch[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+#addForm input,#addForm textarea{width:100%}
+.mine{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.03em}
 </style>
 
 <style>
@@ -249,6 +274,7 @@ html,body{overscroll-behavior-y:none}
   <div class="s-foot" id="sFoot"><div class="in"><div class="fb" id="fb" hidden></div><button class="btn primary big" id="sCheck">Check</button></div></div>
 </div>
 
+<input type="file" id="restoreIn" accept=".json,application/json" hidden>
 <div id="sing" hidden>
   <div class="s-top">
     <button class="x" id="gClose" aria-label="Close sing-along"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
@@ -282,7 +308,41 @@ const VERSES=[
  {id:'mat6-33',ref:'Matthew 6:33',tag:'Priorities',chunks:['But seek first God’s Kingdom','and his righteousness;','and all these things','will be given to you as well.']},
  {id:'rom12-2',ref:'Romans 12:2',tag:'Renewed mind',chunks:['Don’t be conformed to this world,','but be transformed','by the renewing of your mind,','so that you may prove what is the good,','well-pleasing,','and perfect will of God.']},
  {id:'eph2-8',ref:'Ephesians 2:8–9',tag:'Grace',chunks:['for by grace you have been saved','through faith,','and that not of yourselves;','it is the gift of God,','not of works,','that no one would boast.']},
- {id:'2ti3-16',ref:'2 Timothy 3:16–17',tag:'Scripture',chunks:['Every Scripture is God-breathed','and profitable for teaching,','for reproof, for correction,','and for instruction in righteousness,','that each person who belongs to God','may be complete,','thoroughly equipped for every good work.']}
+ {id:'2ti3-16',ref:'2 Timothy 3:16–17',tag:'Scripture',chunks:['Every Scripture is God-breathed','and profitable for teaching,','for reproof, for correction,','and for instruction in righteousness,','that each person who belongs to God','may be complete,','thoroughly equipped for every good work.']},
+ {id:'gen1-1',ref:'Genesis 1:1',tag:'Creation',chunks:['In the beginning,','God created the heavens','and the earth.']},
+ {id:'psa46-10',ref:'Psalm 46:10',tag:'Stillness',chunks:['“Be still,','and know that I am God.','I will be exalted among the nations.','I will be exalted in the earth.”']},
+ {id:'jhn14-6',ref:'John 14:6',tag:'The way',chunks:['Jesus said to him,','I am the way, the truth, and the life.','No one comes to the Father,','except through me.']},
+ {id:'rom6-23',ref:'Romans 6:23',tag:'The gift',chunks:['For the wages of sin is death,','but the free gift of God is eternal life','in Christ Jesus our Lord.']},
+ {id:'mat7-7',ref:'Matthew 7:7',tag:'Ask',chunks:['Ask, and it will be given you.','Seek, and you will find.','Knock, and it will be opened for you.']},
+ {id:'psa119-105',ref:'Psalm 119:105',tag:'Guidance',chunks:['Your word is a lamp to my feet,','and a light for my path.']},
+ {id:'php4-6',ref:'Philippians 4:6–7',tag:'Peace over worry',chunks:['In nothing be anxious,','but in everything, by prayer and petition','with thanksgiving,','let your requests be made known to God.','And the peace of God,','which surpasses all understanding,','will guard your hearts and your thoughts','in Christ Jesus.']},
+ {id:'lam3-22',ref:'Lamentations 3:22–23',tag:'New mercies',chunks:['It is because of Yahweh’s loving kindnesses','that we are not consumed,','because his mercies don’t fail.','They are new every morning.','Great is your faithfulness.']},
+ {id:'jhn1-1',ref:'John 1:1',tag:'The Word',chunks:['In the beginning was the Word,','and the Word was with God,','and the Word was God.']},
+ {id:'psa27-1',ref:'Psalm 27:1',tag:'No fear',chunks:['Yahweh is my light','and my salvation.','Whom shall I fear?','Yahweh is the strength of my life.','Of whom shall I be afraid?']},
+ {id:'gal5-22',ref:'Galatians 5:22–23',tag:'Fruit of the Spirit',chunks:['But the fruit of the Spirit is love,','joy, peace, patience,','kindness, goodness, faith,','gentleness, and self-control.','Against such things there is no law.']},
+ {id:'2co5-17',ref:'2 Corinthians 5:17',tag:'New creation',chunks:['Therefore if anyone is in Christ,','he is a new creation.','The old things have passed away.','Behold, all things have become new.']},
+ {id:'pro16-3',ref:'Proverbs 16:3',tag:'Plans',chunks:['Commit your deeds to Yahweh,','and your plans shall succeed.']},
+ {id:'mat5-16',ref:'Matthew 5:16',tag:'Let it shine',chunks:['Even so, let your light shine before men,','that they may see your good works','and glorify your Father','who is in heaven.']},
+ {id:'rom5-8',ref:'Romans 5:8',tag:'His love',chunks:['But God commends his own love toward us,','in that while we were yet sinners,','Christ died for us.']},
+ {id:'heb11-1',ref:'Hebrews 11:1',tag:'Faith',chunks:['Now faith is assurance','of things hoped for,','proof of things not seen.']},
+ {id:'psa37-4',ref:'Psalm 37:4',tag:'Delight',chunks:['Also delight yourself in Yahweh,','and he will give you','the desires of your heart.']},
+ {id:'jhn14-27',ref:'John 14:27',tag:'His peace',chunks:['Peace I leave with you.','My peace I give to you;','not as the world gives, I give to you.','Don’t let your heart be troubled,','neither let it be fearful.']},
+ {id:'deu31-6',ref:'Deuteronomy 31:6',tag:'He goes with you',chunks:['Be strong and courageous.','Don’t be afraid or scared of them,','for Yahweh your God himself','is who goes with you.','He will not fail you','nor forsake you.']},
+ {id:'1pe5-7',ref:'1 Peter 5:7',tag:'Cast your cares',chunks:['casting all your worries on him,','because he cares for you.']},
+ {id:'mic6-8',ref:'Micah 6:8',tag:'Walk humbly',chunks:['He has shown you, O man,','what is good.','What does Yahweh require of you,','but to act justly,','to love mercy,','and to walk humbly with your God?']},
+ {id:'rom10-9',ref:'Romans 10:9',tag:'Confess and believe',chunks:['that if you will confess with your mouth','that Jesus is Lord','and believe in your heart','that God raised him from the dead,','you will be saved.']},
+ {id:'psa118-24',ref:'Psalm 118:24',tag:'This day',chunks:['This is the day','that Yahweh has made.','We will rejoice','and be glad in it!']},
+ {id:'jas1-5',ref:'James 1:5',tag:'Wisdom',chunks:['But if any of you lacks wisdom,','let him ask of God,','who gives to all liberally','and without reproach,','and it will be given to him.']},
+ {id:'2co12-9',ref:'2 Corinthians 12:9',tag:'Sufficient grace',chunks:['He has said to me,','“My grace is sufficient for you,','for my power is made perfect in weakness.”','Most gladly therefore','I will rather glory in my weaknesses,','that the power of Christ may rest on me.']},
+ {id:'jhn16-33',ref:'John 16:33',tag:'Overcome',chunks:['I have told you these things,','that in me you may have peace.','In the world you have trouble;','but cheer up!','I have overcome the world.']},
+ {id:'psa139-14',ref:'Psalm 139:14',tag:'Wonderfully made',chunks:['I will give thanks to you,','for I am fearfully','and wonderfully made.','Your works are wonderful.','My soul knows that very well.']},
+ {id:'heb13-8',ref:'Hebrews 13:8',tag:'Unchanging',chunks:['Jesus Christ is the same','yesterday, today, and forever.']},
+ {id:'1th5-16',ref:'1 Thessalonians 5:16–18',tag:'Joy and thanks',chunks:['Always rejoice.','Pray without ceasing.','In everything give thanks,','for this is the will of God','in Christ Jesus toward you.']},
+ {id:'rom15-13',ref:'Romans 15:13',tag:'God of hope',chunks:['Now may the God of hope','fill you with all joy and peace in believing,','that you may abound in hope','in the power of the Holy Spirit.']},
+ {id:'luk1-37',ref:'Luke 1:37',tag:'Nothing impossible',chunks:['For nothing spoken by God','is impossible.']},
+ {id:'col3-23',ref:'Colossians 3:23',tag:'Work heartily',chunks:['And whatever you do,','work heartily,','as for the Lord and not for men,']},
+ {id:'1jn1-9',ref:'1 John 1:9',tag:'Forgiveness',chunks:['If we confess our sins,','he is faithful and righteous','to forgive us the sins','and to cleanse us from all unrighteousness.']},
+ {id:'1jn4-19',ref:'1 John 4:19',tag:'First loved',chunks:['We love him,','because he first loved us.']}
 ];
 const STRENGTH=['','New','Growing','Steady','Strong','Rooted','Hidden in heart'];
 const INTERVAL=[0,1,2,4,7,14,30,60,90];
@@ -312,13 +372,20 @@ const pd=s=>new Date(s+'T12:00:00');
 const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ymd(d)};
 const diffDays=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
 const KEY='hidden-in-my-heart-v1';
-function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},settings:{music:true,autoplay:false,tempo:'normal',size:'large'}}}
+function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},retired:{},second:[],custom:[],settings:{palette:'evergreen',mode:'auto',music:true,autoplay:false,tempo:'normal',size:'large'}}}
+/* Your own verses live in progress data; this keeps the verse list in step with it. */
+function syncCustom(list){for(let i=VERSES.length-1;i>=0;i--)if(VERSES[i].custom)VERSES.splice(i,1);(Array.isArray(list)?list:[]).forEach(c=>{if(c&&c.id&&c.ref&&Array.isArray(c.chunks)&&c.chunks.length)VERSES.push({...c,custom:true})})}
+function normalize(st){if(!st||typeof st!=='object'||!st.start){syncCustom([]);return fresh()}
+  syncCustom(st.custom);
+  st.settings=Object.assign(fresh().settings,st.settings||{});
+  st.order=(Array.isArray(st.order)?st.order:[]).filter(id=>V(id));VERSES.forEach(v=>{if(!st.order.includes(v.id))st.order.push(v.id)});
+  ['srs','log','weekDays','weekCheck','retired'].forEach(k=>{if(!st[k]||typeof st[k]!=='object')st[k]={}});
+  ['second','custom'].forEach(k=>{if(!Array.isArray(st[k]))st[k]=[]});
+  if(typeof st.offset!=='number')st.offset=0;return st}
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
-if(!state||!state.start)state=fresh();
-state.settings=Object.assign(fresh().settings,state.settings||{});
-VERSES.forEach(v=>{if(!state.order.includes(v.id))state.order.push(v.id)});
-state.retired=state.retired||{};
+state=normalize(state);
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 const today=()=>addDays(ymd(new Date()),state.offset);
 function weekPos(){const d=Math.max(0,diffDays(state.start,today()));return{w:Math.floor(d/7),day:d%7}}
@@ -344,6 +411,8 @@ const IC={
  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
  flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5 5.5 5 10.5A5 5 0 0 1 7 13c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-6.5 1-9.5z"/></svg>',
  star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>',
+ save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
 };
 
@@ -398,12 +467,13 @@ function karaoke(btn,v,root){ // toggles play/stop on a button, lighting words i
   if(ok){btn.classList.add('on');btn.innerHTML=IC.stop+'<span>Stop</span>'}}
 
 /* ---------- Claude voice: dictation + read aloud ---------- */
-let DICT=null,TTS=null,dictTarget=null,dictPartial=null;
+let DL=null,DICT=null,TTS=null,dictTarget=null,dictPartial=null;
 function deviceVoice(){return{speak(text){return new Promise((res,rej)=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=0.9;u.lang='en-US';u.onend=()=>res();u.onerror=e=>rej({code:e.error||'upstream_error'});speechSynthesis.speak(u)}catch(e){rej({code:'unavailable'})}})},stop(){try{speechSynthesis.cancel()}catch(e){}}}}
 async function initCaps(){
   if(!(window.claude&&window.claude.use)){if('speechSynthesis' in window){TTS=deviceVoice();document.body.classList.add('has-tts')}return}
   try{DICT=await window.claude.use('dictation')}catch(e){DICT=null}
   try{TTS=await window.claude.use('tts')}catch(e){TTS=null}
+  try{DL=await window.claude.use('downloads')}catch(e){DL=null}
   if(DICT){document.body.classList.add('has-dict');
     DICT.onFinal(({text})=>{if(!dictTarget)return;const cur=dictTarget.value;dictTarget.value=cur?cur+text:text.trimStart();dictTarget.dispatchEvent(new Event('input',{bubbles:true}))});
     DICT.onPartial(({text})=>{if(dictPartial)dictPartial.textContent=text});
@@ -416,12 +486,18 @@ function micClick(ta){if(!DICT)return;if(DICT.active()){DICT.stop().catch(()=>{}
     if(m!=='')toast(m||'Voice input stopped. You can type instead.');if(e.code==='not_granted'||e.code==='unavailable')document.body.classList.remove('has-dict')})}
 function speak(text){if(!TTS)return;stopTune();TTS.speak(text.replace(/[“”]/g,'')).catch(()=>{})}
 function stopAll(){stopTune();try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}try{TTS&&TTS.stop()}catch(e){}}
-function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;t.setAttribute('role','status');document.body.appendChild(t);setTimeout(()=>t.remove(),3800)}
+function toast(msg){$$('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;t.setAttribute('role','status');document.body.appendChild(t);setTimeout(()=>t.remove(),3800)}
 
 /* ---------- Shared rendering ---------- */
 function verseHTML(v){const W=words(v);let html='',ci=-1;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}html+=`<span class="w" data-w="${i}">${esc(w.t)}</span> `});return `<div class="verse">${html}</span></div>`}
 function strengthHTML(id){const b=Math.min(6,state.srs[id]?.box||0);return `<span class="strength"><span class="bars">${[1,2,3,4,5,6].map(k=>`<b class="${k<=b?'f':''}"></b>`).join('')}</span>${STRENGTH[b]||'Not started'}</span>`}
-function applySettings(){const sz={standard:'16px',large:'18px',xl:'21px'}[state.settings.size]||'18px';document.documentElement.style.setProperty('--fs',sz);document.body.classList.toggle('has-music',!!state.settings.music)}
+const PALETTES=[['evergreen','Evergreen','#1C6A52'],['sunset','Sunset','#E08A1E'],['ocean','Ocean','#1F5F99'],['lavender','Lavender','#6B4C9A']];
+function applyTheme(){const root=document.documentElement,pal=state.settings.palette||'evergreen',mode=state.settings.mode||'auto';
+  if(pal==='evergreen')delete root.dataset.palette;else root.dataset.palette=pal;
+  if(mode!=='auto'){root.dataset.theme=mode;root.dataset.appTheme='1'}else if(root.dataset.appTheme){delete root.dataset.theme;delete root.dataset.appTheme}
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',getComputedStyle(root).getPropertyValue('--bg').trim()||'#EEF3EF')}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>state&&applyTheme())}catch(e){}
+function applySettings(){applyTheme();const sz={standard:'16px',large:'18px',xl:'21px'}[state.settings.size]||'18px';document.documentElement.style.setProperty('--fs',sz);document.body.classList.toggle('has-music',!!state.settings.music)}
 const niceDate=s=>pd(s).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 
 /* ---------- Session plans ---------- */
@@ -441,6 +517,7 @@ function dailyItems(){const t=today(),{day}=weekPos(),wv=weekVerse();const learn
   const out=learn.slice();
   if(revs[0])out.splice(Math.min(2,out.length),0,revs[0]);
   revs.slice(1).forEach(r=>out.splice(Math.max(out.length-1,1),0,r));
+  state.second.filter(x=>V(x.id)&&x.id!==wv?.id).forEach((x,i)=>{const k=SECOND[Math.min(x.stage,6)];out.splice(Math.min(1+i,out.length),0,{kind:k[0],p:k[1],vid:x.id,second:true,seed:hash(t+x.id+'s')})});
   if(!wv&&!out.length&&revs.length)return revs;
   return out.map((x,i)=>({...x,key:'k'+i}))}
 function extraItems(id){const learned=learnedIds().includes(id)||weekVerse()?.id===id;const seed=hash(Date.now()+id);
@@ -564,7 +641,7 @@ function startSession(items,mode,label){stopAll();if(!items.length){toast('Nothi
   $('#session').hidden=false;$('#sLeave').hidden=true;document.body.style.overflow='hidden';showEx()}
 function showEx(){const it=S.items[S.i],v=V(it.vid),ex=build(it);S.cur=ex;S.state='answer';
   foot.className='s-foot';fb.hidden=true;fb.innerHTML='';
-  body.innerHTML=`<div class="s-inner"><div class="ex-h"><div class="ex-tags">${it.review?'<span class="chip gold">Callback</span>':it.retry?'<span class="chip muted">One more try</span>':'<span class="chip">This week</span>'}<span class="r">${esc(v.ref)}</span></div><h2>${esc(ex.title)}</h2><p class="sub">${esc(ex.sub)}</p></div><div class="ex-b"></div></div>`;
+  body.innerHTML=`<div class="s-inner"><div class="ex-h"><div class="ex-tags">${it.review?'<span class="chip gold">Callback</span>':it.retry?'<span class="chip muted">One more try</span>':it.second?'<span class="chip gold">Also practicing</span>':'<span class="chip">This week</span>'}<span class="r">${esc(v.ref)}</span></div><h2>${esc(ex.title)}</h2><p class="sub">${esc(ex.sub)}</p></div><div class="ex-b"></div></div>`;
   const root=$('.ex-b',body);ex.root=root;root.innerHTML=ex.html();ex.mount(root,api);body.scrollTop=0;
   btn.textContent=ex.noGrade?'Continue':'Check';btn.disabled=!ex.noGrade;
   $('#sBar').style.width=(S.i/S.items.length*100)+'%';$('#sCount').textContent=`${S.i+1} / ${S.items.length}`}
@@ -588,7 +665,9 @@ function finish(){const t=today(),firsts=Object.values(S.first),right=firsts.fil
       const wc=firsts.find(f=>f.it.week);if(wc&&wc.ok)state.weekCheck[wv.id]=true}
     const byV={};firsts.forEach(f=>{if(f.it.review)(byV[f.it.vid]=byV[f.it.vid]||[]).push(f.ok)});
     Object.entries(byV).forEach(([id,res])=>{const s=state.srs[id],ok=res.every(Boolean);if(s.last===t)return;s.box=ok?Math.min(8,s.box+1):Math.max(1,Math.min(s.box-1,3));s.due=addDays(t,ok?INTERVAL[s.box]:1);s.last=t});
-    revNote=Object.keys(byV).map(id=>`<div class="item"><span class="t">${esc(V(id).ref)}</span>${strengthHTML(id)}<span class="s">Next callback: ${state.srs[id].due===addDays(t,1)?'tomorrow':niceDate(state.srs[id].due)}</span></div>`).join('')}
+    const grads=[];firsts.forEach(f=>{if(!f.it.second)return;const x=state.second.find(y=>y.id===f.it.vid);if(!x||x.last===t)return;x.last=t;
+      if(f.ok){if(x.stage>=6){graduate(x.id);grads.push(x.id)}else x.stage++}});
+    revNote=grads.map(id=>`<div class="item"><span class="t">${esc(V(id).ref)}</span><span class="chip gold">Memorized</span><span class="s">Moved to Keeping fresh. First callback in 4 days.</span></div>`).join('')+Object.keys(byV).map(id=>`<div class="item"><span class="t">${esc(V(id).ref)}</span>${strengthHTML(id)}<span class="s">Next callback: ${state.srs[id].due===addDays(t,1)?'tomorrow':niceDate(state.srs[id].due)}</span></div>`).join('')}
   let toMsg='';if(S.mode==='testout'){const id0=S.items[0].vid;if(firsts[0]?.ok){const nx=state.order[weekPos().w+1];knowVerse(id0,true);toMsg=`<b>${esc(V(id0).ref)}</b> moved to Keeping fresh. `+(nx?`${esc(V(nx).ref)} is this week’s verse now.`:'That was the last starter verse.')}else toMsg=`Not quite yet. Stay with ${esc(V(id0).ref)} this week. The daily lessons will get you there.`}
   save();const mins=Math.max(1,Math.round((Date.now()-S.t0)/60000));
   S.state='done';$('#sBar').style.width='100%';$('#sCount').textContent='';foot.className='s-foot';fb.hidden=true;btn.textContent='Back to home';btn.disabled=false;
@@ -647,6 +726,59 @@ $('#sing').addEventListener('click',e=>{const b=e.target.closest('[data-ground],
   else{state.settings.tempo=b.dataset.gspeed;save();if(G.playing){G.playing=false;stopAll();drawSing()}else drawSingCtrl()}});
 document.addEventListener('keydown',e=>{if(G&&e.key==='Escape')closeSing()});
 
+/* ---------- Name & backup ---------- */
+function welcomeHTML(){return `<div class="card" id="welcome"><h3>Welcome! What’s your first name?</h3><p class="note">It’s only used in your greeting, and it stays on this device.</p><div class="row"><input id="nameIn" class="name-in" placeholder="Your first name" autocomplete="given-name"><button class="btn primary" data-name-save>Save</button></div><div><button class="btn small quiet" data-name-skip>Skip</button></div></div>`}
+function setName(n){state.name=String(n||'').trim().slice(0,40);save();render()}
+const realToday=()=>ymd(new Date());
+function backupDue(){if(state.lastBackup)return diffDays(state.lastBackup,realToday())>=30;return Object.values(state.log).filter(x=>x.done).length>=5}
+function backupNudge(){if(!backupDue())return'';return `<p class="nudge">${IC.save}<span>${state.lastBackup?`Last backup was ${diffDays(state.lastBackup,realToday())} days ago.`:'Your progress hasn’t been backed up yet.'}</span><button class="linkish" data-backup>Back up now</button></p>`}
+function backupDone(){state.lastBackup=realToday();save();render();toast('Backup saved.')}
+async function saveBackup(){const name=`hidden-heart-backup-${realToday()}.json`;
+  const json=JSON.stringify({app:'hidden-in-my-heart',version:1,savedAt:new Date().toISOString(),state},null,1);
+  if(DL){try{await DL.save({filename:name,data:json});backupDone()}catch(e){if(e&&e.code!=='declined')toast('The backup couldn’t be saved here.')}return}
+  if(window.claude){toast('Saving files isn’t available in this view.');return}
+  let file=null;try{file=new File([json],name,{type:'application/json'})}catch(e){}
+  const touch=matchMedia('(pointer: coarse)').matches;
+  if(file&&touch&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'Hidden in My Heart backup'});backupDone()}catch(e){if(e&&e.name!=='AbortError')toast('The backup couldn’t be shared. Try again.')}return}
+  try{const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);backupDone()}catch(e){toast('The backup couldn’t be saved.')}}
+let PENDING=null;
+$('#restoreIn').addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  let obj=null;try{obj=JSON.parse(await f.text())}catch(err){}
+  if(!obj||obj.app!=='hidden-in-my-heart'||!obj.state||!obj.state.start){toast('That file isn’t a Hidden in My Heart backup.');return}
+  PENDING=obj;const when=obj.savedAt?new Date(obj.savedAt).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}):'an earlier date';
+  const box=$('#restoreConfirm');if(box)box.innerHTML=`<div class="confirm"><span>Replace the progress on this device with the backup from ${esc(when)}?</span><button class="btn small danger" data-restore-yes>Replace</button><button class="btn small" data-restore-no>Cancel</button></div>`});
+
+/* ---------- Your own verses ---------- */
+let ADD_OPEN=false,DEL_ID=null,ADD_WHEN='next';
+function addFormHTML(){const w=[['tomorrow','Tomorrow'],['next','Next week'],['later','End of my list']];
+  return `<div class="card set" id="addForm"><h3>Add your own verse</h3>
+  <label class="h" for="addRef">Reference</label><input id="addRef" class="name-in" placeholder="For example, Isaiah 26:3" autocomplete="off">
+  <label class="h" for="addTr">Translation (optional)</label><input id="addTr" class="name-in" placeholder="For example, NIV, ESV or KJV" autocomplete="off">
+  <label class="h" for="addText">Verse text</label><textarea id="addText" class="recite" placeholder="Type or paste the verse. To choose where the phrases break, put each phrase on its own line."></textarea>
+  <label class="h">When should it start?</label><div class="seg">${w.map(([k,n])=>`<button data-when="${k}" aria-pressed="${ADD_WHEN===k}">${n}</button>`).join('')}</div>
+  <p class="note" id="addMsg" aria-live="polite"></p>
+  <div class="row"><button class="btn primary" data-add-save>Add verse</button><button class="btn quiet" data-add-cancel>Cancel</button></div>
+  <p class="note">Your verses are saved on this phone and in your backups. Use any translation you like.</p></div>`}
+function phraseSplit(raw){const lines=raw.split(/\n+/).map(x=>x.trim().replace(/\s+/g,' ')).filter(Boolean);if(lines.length>1)return lines;
+  const ws=(lines[0]||'').split(' ').filter(Boolean),out=[];let cur=[];
+  const BRK=new Set('and but for because that who whose which when where those so then or nor yet through'.split(' '));
+  ws.forEach((w,i)=>{cur.push(w);const nx=(ws[i+1]||'').toLowerCase().replace(/[^a-z]/g,'');
+    if((/[,;:.?!][”"’)]?$/.test(w)&&cur.length>=3)||(BRK.has(nx)&&cur.length>=5)||cur.length>=9){out.push(cur.join(' '));cur=[]}});
+  if(cur.length){if(cur.length<3&&out.length)out[out.length-1]+=' '+cur.join(' ');else out.push(cur.join(' '))}return out}
+function addCustom(){const ref=$('#addRef').value.trim().slice(0,60),tr=$('#addTr').value.trim().slice(0,30),raw=$('#addText').value.trim(),msg=m=>{$('#addMsg').textContent=m};
+  if(!ref){msg('Add the reference, like Isaiah 26:3.');$('#addRef').focus();return}
+  if(raw.split(/\s+/).length<3){msg('Type the words of the verse (at least a few words).');$('#addText').focus();return}
+  if(raw.split(/\s+/).length>160){msg('That’s a long passage. Try one up to about 150 words.');return}
+  const id='my-'+Date.now().toString(36),v={id,ref,tag:tr||'Your verse',trans:tr,chunks:phraseSplit(raw)};
+  state.custom.push(v);VERSES.push({...v,custom:true});const{w}=weekPos(),o=state.order;
+  if(ADD_WHEN==='later')o.push(id);else{o.splice(Math.min(w+1,o.length),0,id);if(ADD_WHEN==='tomorrow'){const wv=weekVerse();state.nextUp={id,from:today(),cur:wv?wv.id:null}}}
+  ADD_OPEN=false;save();render();toast(ADD_WHEN==='tomorrow'?`${ref} starts tomorrow.`:ADD_WHEN==='next'?`${ref} is up next week.`:`${ref} added to the end of your list.`)}
+function removeCustom(id){const o=state.order,i=o.indexOf(id),{w}=weekPos();
+  if(i>=0){o.splice(i,1);if(i<w)state.start=addDays(state.start,7);else if(i===w)state.start=addDays(today(),-w*7)}
+  state.custom=state.custom.filter(c=>c.id!==id);syncCustom(state.custom);['srs','weekDays','retired','weekCheck'].forEach(k=>delete state[k][id]);
+  state.second=state.second.filter(x=>x.id!==id);if(state.nextUp?.id===id)delete state.nextUp;DEL_ID=null;save();render();toast('Verse removed.')}
+
 /* ---------- Skipping ahead ---------- */
 function nextLabel(){const{w,day}=weekPos();if(w>=state.order.length)return null;if(day<6)return `Continue to day ${day+2}`;const n=state.order[w+1];return n?`Start next verse: ${V(n).ref}`:null}
 function nextLesson(){state.start=addDays(state.start,-1);save()}
@@ -654,22 +786,50 @@ function knowVerse(id,tested){const t=today(),{day}=weekPos();state.srs[id]=test
 
 /* ---------- Views ---------- */
 let TAB='today';
-function render(){stopTune();applySettings();syncLearned();
+/* Keeps a line (like the date line) on one line: tries shorter wordings, then slightly smaller text. */
+function dateLines(t,w,day,hasVerse){const d=pd(t),f=o=>d.toLocaleDateString(undefined,o),wk=`Week ${w+1}`;
+  return hasVerse?[`${f({weekday:'long',month:'long',day:'numeric'})} · ${wk}, day ${day+1} of 7`,`${f({weekday:'short',month:'short',day:'numeric'})} · ${wk} · Day ${day+1} of 7`,`${f({month:'short',day:'numeric'})} · ${wk} · Day ${day+1}/7`]
+   :[`${f({weekday:'long',month:'long',day:'numeric'})} · ${wk}`,`${f({weekday:'short',month:'short',day:'numeric'})} · ${wk}`]}
+function fitLines(){$$('.fit[data-fit]').forEach(el=>{let opts;try{opts=JSON.parse(el.dataset.fit)}catch(e){return}
+  el.style.fontSize='';const fits=()=>el.scrollWidth<=el.clientWidth+1;
+  for(const o of opts){el.textContent=o;if(fits())return}
+  const base=parseFloat(getComputedStyle(el).fontSize);for(let k=0.95;k>=0.7;k-=0.05){el.style.fontSize=(base*k)+'px';if(fits())return}})}
+let fitT;addEventListener('resize',()=>{clearTimeout(fitT);fitT=setTimeout(fitLines,120)});
+try{document.fonts&&document.fonts.ready.then(fitLines)}catch(e){}
+/* A verse chosen with "Start this verse tomorrow" takes over the next day.
+   The verse it interrupts moves two weeks later in the line-up (not removed). */
+function applyNextUp(){const n=state.nextUp;if(!n||today()<=n.from)return;delete state.nextUp;
+  const id=n.id;if(!V(id)||learnedIds().includes(id)){save();return}
+  const{w}=weekPos(),o=state.order,cur=o[w];o.splice(o.indexOf(id),1);
+  if(n.cur&&cur===n.cur){const done=(state.weekDays[cur]||[]).length;
+    if(done>=3){state.second=state.second.filter(x=>x.id!==cur);state.second.push({id:cur,stage:Math.min(done,6),last:null});if(state.second.length>2)state.second.shift()}
+    o.splice(o.indexOf(cur),1);o.splice(w,0,id);o.splice(Math.min(w+2,o.length),0,cur);delete state.weekDays[cur]}
+  else o.splice(w,0,id);
+  state.start=addDays(today(),-w*7);delete state.weekDays[id];save()}
+/* Second focus: a verse you were most of the way through when you switched (3+ lessons done)
+   keeps one exercise a day, getting harder, until you say it from memory; then it moves to Keeping fresh. */
+const SECOND=[['bank',3],['order'],['bank',4],['first',1],['type',4],['recite',true],['recite',false]];
+function graduate(id){state.second=state.second.filter(x=>x.id!==id);const o=state.order,{w}=weekPos(),i=o.indexOf(id);if(i<=w)return;
+  o.splice(i,1);o.splice(w,0,id);state.start=addDays(state.start,-7);state.srs[id]={box:3,due:addDays(today(),4),last:today()};delete state.weekDays[id]}
+function tidySecond(){const wv=weekVerse(),L=learnedIds();state.second=state.second.filter(x=>V(x.id)&&x.id!==wv?.id&&!L.includes(x.id))}
+function render(){stopTune();applyNextUp();tidySecond();applySettings();syncLearned();
   $('#pStreak').innerHTML=IC.flame+streak();$('#pXp').innerHTML=IC.star+totalXp();
   $$('nav.tabs button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.tab===TAB));$$('nav.tabs button').forEach(b=>{if(b.dataset.tab===TAB)b.setAttribute('aria-current','page')});
-  $('#view').innerHTML=TAB==='today'?homeHTML():TAB==='verses'?versesHTML():settingsHTML();window.scrollTo(0,0)}
+  $('#view').innerHTML=TAB==='today'?homeHTML():TAB==='verses'?versesHTML():settingsHTML();fitLines();window.scrollTo(0,0)}
 
 function homeHTML(){const t=today(),{w,day}=weekPos(),wv=weekVerse(),practiced=state.log[t]?.done,done=wv?(state.weekDays[wv.id]||[]).includes(day):practiced,items=dailyItems(),nl=nextLabel();
-  const hr=new Date().getHours(),greet=hr<12?'Good morning, Shane':hr<18?'Good afternoon, Shane':'Good evening, Shane';
+  const hr=new Date().getHours(),greet=(hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+(state.name?', '+state.name:'');
   const wStart=addDays(state.start,w*7),dd=wv?(state.weekDays[wv.id]||[]):[];
   const revCount=items.filter(x=>x.review).length,mins=Math.max(2,Math.round(items.length*0.65));
   const learned=learnedIds();
-  return `<section class="hello"><p class="eyebrow">${esc(niceDate(t))} · Week ${w+1}${wv?`, day ${day+1} of 7`:''}</p><h1>${greet}</h1></section>
+  return `<section class="hello"><p class="eyebrow fit" data-fit="${esc(JSON.stringify(dateLines(t,w,day,!!wv)))}"></p><h1>${esc(greet)}</h1></section>${state.name===undefined?welcomeHTML():''}
   ${wv?`<article class="card" id="homeVerse"><div class="vc-head"><span class="chip">This week’s verse</span><span class="tag">${esc(wv.tag)}</span></div>
     <h2 class="ref">${esc(wv.ref)}</h2>
     <div class="veil ${day>=3&&!done?'on':''}">${verseHTML(wv)}<button class="btn unveil" data-unveil>${IC.eye}<span>Try to recall it, then show</span></button></div>
     <div class="row"><button class="btn needs-music" data-tune="${wv.id}">${IC.note}<span>Play the tune</span></button><button class="btn needs-music" data-sing="${wv.id}">${IC.mic}<span>Sing along</span></button><button class="btn needs-tts" data-say="${wv.id}">${IC.speak}<span>Read it to me</span></button></div>
     <div class="week" aria-label="This week">${[0,1,2,3,4,5,6].map(i=>`<div class="day ${dd.includes(i)?'done':''} ${i===day?'today':''}"><i>${dd.includes(i)?IC.check:i+1}</i>${pd(addDays(wStart,i)).toLocaleDateString(undefined,{weekday:'short'})}</div>`).join('')}</div>
+    ${state.nextUp&&V(state.nextUp.id)?`<p class="nudge">${IC.play}<span>Starting tomorrow: <b>${esc(V(state.nextUp.id).ref)}</b>. ${(state.weekDays[wv.id]||[]).length>=3?`${esc(wv.ref)} stays in your daily practice as a second focus.`:`${esc(wv.ref)} moves a couple of weeks later.`}</span><button class="linkish" data-nextup-cancel>Cancel</button></p>`:''}
+    ${state.second.filter(x=>V(x.id)&&x.id!==wv.id).map(x=>`<p class="nudge">${IC.star}<span>Also practicing <b>${esc(V(x.id).ref)}</b>: one exercise a day until it’s memorized (${x.stage} of 7 steps done).</span></p>`).join('')}
    </article>`:`<article class="card"><span class="chip gold">All starter verses learned</span><h2 class="ref">Keep them fresh</h2><p>You’ve worked through all ${VERSES.length} weekly verses. Daily practice now focuses on callbacks so they stay with you.</p></article>`}
   <div class="start">${done?`<div class="done-box">${IC.check}<div><b>${wv?`Day ${day+1} lesson done`:'Done for today'}</b><span class="note">${practiced?'Your streak is safe. ':''}The next lesson unlocks tomorrow, or you can keep going now.</span></div></div>${nl?`<button class="btn primary big" data-adv="go">${IC.play}<span>${esc(nl)}</span></button>`:''}<button class="btn" data-go="daily">Practice this lesson again</button>`
     :`<button class="btn primary big" data-go="daily">${IC.play}<span>Start ${wv?`day ${day+1} lesson`:'today’s practice'}</span></button><p class="meta">About ${mins} minutes · ${items.length} exercises${revCount?` · ${revCount} callback${revCount>1?'s':''}`:''}</p>`}
@@ -677,19 +837,27 @@ function homeHTML(){const t=today(),{w,day}=weekPos(),wv=weekVerse(),practiced=s
   <section class="list"><div class="section-h"><h3>Keeping fresh</h3><span class="note">${learned.length} learned</span></div>
    ${learned.length?learned.map(id=>{const s=state.srs[id];return `<div class="item"><span class="t">${esc(V(id).ref)}</span>${strengthHTML(id)}<span class="s">${state.retired[id]?'Reviews paused':s.due<=t?'Callback due':'Next callback '+(s.due===addDays(t,1)?'tomorrow':niceDate(s.due))}</span></div>`}).join('')
      :`<p class="empty">Verses you finish move here. Each one comes back in your daily practice, a little less often as it gets stronger.</p>`}</section>
+  ${backupNudge()}
   <p class="howto">Each day brings a new set of exercises for the week’s verse, getting harder as the week goes on, plus quick callbacks to verses you’ve already learned.</p>`}
 
 function versesHTML(){const{w}=weekPos(),learned=learnedIds(),wv=weekVerse();
   return `<section class="hello"><p class="eyebrow">World English Bible</p><h1>Your verses</h1></section>
-  <p class="note">One new passage each week. Verses you’ve learned never drop out of practice. They come back less often as they get stronger, up to about every three months. Use Stop reviewing if you no longer want to see one.</p>
+  <p class="note">One new passage each week. Verses you’ve learned never drop out of practice. They come back less often as they get stronger, up to about every three months. Use Stop reviewing if you no longer want to see one. To switch focus, tap Start this verse tomorrow on any upcoming verse.</p>
+  ${ADD_OPEN?addFormHTML():`<div><button class="btn" data-add-open>${IC.plus}<span>Add your own verse</span></button></div>`}
   <div class="list">${state.order.map((id,i)=>{const v=V(id),isCur=wv&&wv.id===id,isL=learned.includes(id);
-    const chip=isCur?'<span class="chip">This week</span>':isL?(state.retired[id]?'<span class="chip muted">Reviews paused</span>':'<span class="chip gold">Keeping fresh</span>'):`<span class="chip muted">Week ${i+1}</span>`;
-    return `<div class="item"><span class="t">${esc(v.ref)}</span>${chip}<span class="s">${esc(v.chunks[0].replace(/[“”]/g,''))} …</span>${isL?strengthHTML(id):''}
-     <div class="acts"><button class="btn small needs-music" data-tune-solo="${id}">${IC.note}<span>Tune</span></button><button class="btn small needs-music" data-sing="${id}">${IC.mic}<span>Sing along</span></button><button class="btn small" data-extra="${id}">${isL||isCur?'Practice':'Preview'}</button>${isL?`<button class="btn small quiet" data-retire="${id}">${state.retired[id]?'Resume reviews':'Stop reviewing'}</button>`:''}${!isL&&!isCur&&wv?`<button class="btn small quiet" data-swap="${id}">Make this week’s verse</button>`:''}</div></div>`}).join('')}</div>`}
+    const chip=state.nextUp?.id===id?'<span class="chip gold">Starts tomorrow</span>':state.second.some(x=>x.id===id)?'<span class="chip gold">Also practicing</span>':isCur?'<span class="chip">This week</span>':isL?(state.retired[id]?'<span class="chip muted">Reviews paused</span>':'<span class="chip gold">Keeping fresh</span>'):`<span class="chip muted">Week ${i+1}</span>`;
+    return `<div class="item"><span class="t">${esc(v.ref)}</span>${chip}<span class="s">${v.custom?`<span class="mine">YOUR VERSE${v.trans?' · '+esc(v.trans):''}</span><br>`:''}${esc(v.chunks[0].replace(/[“”]/g,''))} …</span>${isL?strengthHTML(id):''}${DEL_ID===id?`<div class="confirm" style="grid-column:1/-1"><span>Remove ${esc(v.ref)} and its progress?</span><button class="btn small danger" data-del-yes="${id}">Remove</button><button class="btn small" data-del-no>Cancel</button></div>`:''}
+     <div class="acts"><button class="btn small needs-music" data-tune-solo="${id}">${IC.note}<span>Tune</span></button><button class="btn small needs-music" data-sing="${id}">${IC.mic}<span>Sing along</span></button><button class="btn small" data-extra="${id}">${isL||isCur?'Practice':'Preview'}</button>${isL?`<button class="btn small quiet" data-retire="${id}">${state.retired[id]?'Resume reviews':'Stop reviewing'}</button>`:''}${!isL&&!isCur?(state.nextUp?.id===id?`<button class="btn small quiet" data-nextup-cancel>Cancel</button>`:`<button class="btn small quiet" data-nextup="${id}">Start this verse tomorrow</button>`):''}${v.custom?`<button class="btn small quiet danger" data-del="${id}">Remove</button>`:''}</div></div>`}).join('')}</div>`}
 
 function settingsHTML(){const st=state.settings,{w,day}=weekPos();
   const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-set="${key}" data-val="${v}" aria-pressed="${String(st[key])===String(v)}">${l}</button>`).join('')}</div>`;
   return `<section class="hello"><h1>Settings</h1></section>
+  <div class="card set"><label class="h">Color theme</label><div class="swatches">${PALETTES.map(([k,n,c])=>`<button class="swatch" data-set="palette" data-val="${k}" aria-pressed="${(st.palette||'evergreen')===k}"><i style="background:${c}"></i>${n}</button>`).join('')}</div>
+   <label class="h">Light or dark</label>${seg('mode',[['auto','Match my phone'],['light','Light'],['dark','Dark']])}</div>
+  <div class="card set"><label class="h" for="nameSet">Your name</label><div class="row"><input id="nameSet" class="name-in" value="${esc(state.name||'')}" placeholder="Shown in your greeting" autocomplete="given-name"><button class="btn small" data-name-set>Save</button></div></div>
+  <div class="card set" id="backupCard"><label class="h">Backup</label><p class="note">Your progress saves itself on this device as you go. A backup file is a spare copy for a new phone, or in case the app gets deleted. Once a month is plenty; the app shows a small reminder when it’s time.</p>
+   <p class="note">Last backup: <b>${state.lastBackup?esc(niceDate(state.lastBackup)):'never'}</b></p>
+   <div class="row"><button class="btn small" data-backup>${IC.save}<span>Save a backup</span></button><button class="btn small" data-restore>Restore from a backup</button></div><div id="restoreConfirm"></div></div>
   <div class="card set"><label class="h">Text size</label>${seg('size',[['standard','Standard'],['large','Large'],['xl','Extra large']])}</div>
   <div class="card set"><label class="h">Melodies</label>${seg('music',[['true','On'],['false','Off']])}<label class="h">Play the tune automatically when a lesson starts</label>${seg('autoplay',[['false','Off'],['true','On']])}<label class="h">Melody speed</label>${seg('tempo',[['slow','Slow'],['normal','Normal']])}<p class="note">Each passage has its own short tune, with one note per syllable so you can sing the words. Phrases share a repeating pattern so the melody is easy to pick up. Try Sing along on any verse.</p></div>
   <div class="card set"><label class="h">Prototype tools</label><p class="note">Simulated today: <b>${esc(niceDate(today()))}</b> (week ${w+1}, day ${day+1}). Use these to preview how the weeks and callbacks unfold.</p>
@@ -702,6 +870,20 @@ document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el
   if(d.tab){TAB=d.tab;render();return}
   if(G)return;
   if(d.sing){openSing(d.sing);return}
+  if(d.addOpen!==undefined){ADD_OPEN=true;render();setTimeout(()=>$('#addRef')&&$('#addRef').focus(),50);return}
+  if(d.addCancel!==undefined){ADD_OPEN=false;render();return}
+  if(d.addSave!==undefined){addCustom();return}
+  if(d.when){ADD_WHEN=d.when;$$('[data-when]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.when===ADD_WHEN)));return}
+  if(d.del){DEL_ID=d.del;const y=scrollY;render();scrollTo(0,y);return}
+  if(d.delNo!==undefined){DEL_ID=null;const y=scrollY;render();scrollTo(0,y);return}
+  if(d.delYes){removeCustom(d.delYes);return}
+  if(d.nameSave!==undefined){setName($('#nameIn').value);return}
+  if(d.nameSkip!==undefined){setName('');return}
+  if(d.nameSet!==undefined){setName($('#nameSet').value);toast('Name saved.');return}
+  if(d.backup!==undefined){saveBackup();return}
+  if(d.restore!==undefined){$('#restoreIn').click();return}
+  if(d.restoreYes!==undefined){if(PENDING){state=normalize(PENDING.state);PENDING=null;save();render();toast('Progress restored.')}return}
+  if(d.restoreNo!==undefined){PENDING=null;$('#restoreConfirm').innerHTML='';return}
   if(d.go==='daily'){startSession(dailyItems(),'daily');return}
   if(d.adv){nextLesson();if(d.adv==='go')startSession(dailyItems(),'daily');else{render();toast('Skipped to the next lesson.')}return}
   if(d.know!==undefined){const wv=weekVerse();$('#knowPanel').innerHTML=`<div class="card"><p><b>Already know ${esc(wv.ref)}?</b> Say or type it once from memory. Get about 80% of the words and it moves to Keeping fresh, and the next verse starts today.</p><div class="row"><button class="btn primary" data-testout="${wv.id}">Test me (about 1 minute)</button><button class="btn" data-knowskip="${wv.id}">Skip without a test</button><button class="btn" data-knowretire="${wv.id}">Skip and don’t review it</button><button class="btn quiet" data-knowcancel>Cancel</button></div><p class="note">If you skip the test, the verse still comes back as a callback in a few days to make sure it stuck. Choose “don’t review it” to leave it out of callbacks; you can turn reviews back on from the Verses tab.</p></div>`;return}
@@ -715,16 +897,19 @@ document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el
   if(d.say){speak(fullText(V(d.say)));return}
   if(d.tuneSolo){const was=el.classList.contains('on');stopTune();if(!was){if(playTune(V(d.tuneSolo),{onEnd:()=>{el.classList.remove('on');el.innerHTML=IC.note+'<span>Tune</span>'}})){el.classList.add('on');el.innerHTML=IC.stop+'<span>Stop</span>'}}return}
   if(d.extra){startSession(extraItems(d.extra),'extra');return}
+  if(d.nextup){const wv=weekVerse();state.nextUp={id:d.nextup,from:today(),cur:wv?wv.id:null};save();render();toast(`${V(d.nextup).ref} starts tomorrow.`);return}
+  if(d.nextupCancel!==undefined){delete state.nextUp;save();render();toast('Okay, no change to your schedule.');return}
   if(d.swap){const{w}=weekPos(),i=state.order.indexOf(d.swap);[state.order[w],state.order[i]]=[state.order[i],state.order[w]];save();TAB='today';render();toast(`${V(d.swap).ref} is now this week’s verse.`);return}
-  if(d.set){let v=d.val;if(v==='true')v=true;if(v==='false')v=false;state.settings[d.set]=v;save();render();return}
+  if(d.set){let v=d.val;if(v==='true')v=true;if(v==='false')v=false;state.settings[d.set]=v;save();const y=scrollY;render();scrollTo(0,y);return}
   if(d.dev==='day'){state.offset++;save();render();toast('Moved ahead one day.');return}
   if(d.dev==='week'){const{day}=weekPos();state.offset+=7-day;save();render();toast('Moved to the start of next week.');return}
   if(d.dev==='real'){state.offset=0;save();render();return}
   if(d.dev==='reset'){$('#resetConfirm').innerHTML='<div class="confirm"><span>Erase all progress and start over at week 1?</span><button class="btn small danger" data-dev="reset-yes">Erase</button><button class="btn small" data-dev="reset-no">Cancel</button></div>';return}
-  if(d.dev==='reset-yes'){state=fresh();save();render();toast('Progress reset.');return}
+  if(d.dev==='reset-yes'){syncCustom([]);state=fresh();save();render();toast('Progress reset.');return}
   if(d.dev==='reset-no'){$('#resetConfirm').innerHTML='';return}
 });
 
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='nameIn'){e.preventDefault();setName(e.target.value)}else if(e.target.id==='nameSet'){e.preventDefault();setName(e.target.value);toast('Name saved.')}});
 applySettings();render();initCaps();
 </script>
 
