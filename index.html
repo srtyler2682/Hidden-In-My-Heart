@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1C6A52">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hidden Heart">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Hidden in My Heart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap">
+<style>
+/* Layout: one calm column (max 640px), phrase-per-line verse cards, bottom tab bar; practice runs as a full-screen lesson. */
+:root{
+  --bg:#EEF3EF; --surface:#FFFFFF; --surface-2:#E2EAE4; --ink:#16231C; --muted:#526158; --line:#CCD8CF;
+  --accent:#1C6A52; --accent-ink:#FFFFFF; --accent-soft:#D3E9DF; --gold:#A8701A; --gold-soft:#F5E6C8;
+  --good:#2C7A39; --good-soft:#DCEFDA; --bad:#A9412D; --bad-soft:#F6DED7;
+  --ui:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --scripture:"Literata", Georgia, "Times New Roman", serif;
+  --fs:18px; --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1512; --surface:#18211C; --surface-2:#222D26; --ink:#E7EFE9; --muted:#9BAAA1; --line:#2F3C34;
+  --accent:#5DC3A1; --accent-ink:#06130D; --accent-soft:#1B392E; --gold:#E3AE4E; --gold-soft:#3A2E17;
+  --good:#71C77E; --good-soft:#1B3322; --bad:#EE8B74; --bad-soft:#3E231D; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0F1512; --surface:#18211C; --surface-2:#222D26; --ink:#E7EFE9; --muted:#9BAAA1; --line:#2F3C34;
+  --accent:#5DC3A1; --accent-ink:#06130D; --accent-soft:#1B392E; --gold:#E3AE4E; --gold-soft:#3A2E17;
+  --good:#71C77E; --good-soft:#1B3322; --bad:#EE8B74; --bad-soft:#3E231D; color-scheme:dark }
+html{font-size:var(--fs)}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.2}
+p{margin:0}
+.shell{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 120px;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:6px}
+.brand{font-family:var(--scripture);font-style:italic;font-size:1.25rem;font-weight:400;letter-spacing:.01em}
+.pills{display:flex;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:.9rem;font-variant-numeric:tabular-nums}
+.pill svg{width:18px;height:18px}
+.pill.streak{color:var(--gold)}
+.eyebrow{font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.hello{display:flex;flex-direction:column;gap:4px}
+.hello h1{font-size:1.6rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px}
+.vc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:.03em}
+.chip.gold{background:var(--gold-soft);color:var(--gold)}
+.chip.muted{background:var(--surface-2);color:var(--muted)}
+.tag{color:var(--muted);font-size:.9rem}
+.ref{font-family:var(--scripture);font-weight:600;font-size:1.5rem}
+.verse{font-family:var(--scripture);font-size:1.22rem;line-height:1.7;display:flex;flex-direction:column}
+.verse .line{display:block}
+.verse .w{border-radius:4px;transition:background .15s,color .15s;padding:0 1px}
+.verse .w.lit{background:var(--gold-soft);color:var(--ink);box-shadow:0 0 0 2px var(--gold-soft)}
+.veil{position:relative}
+.veil.on .verse{filter:blur(7px);user-select:none}
+.veil .unveil{display:none}
+.veil.on .unveil{display:inline-flex;position:absolute;inset:0;margin:auto;width:max-content;height:max-content}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:10px 18px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:1rem}
+.btn svg{width:20px;height:20px;flex:none}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.primary:disabled{opacity:.45;cursor:default;filter:none}
+.btn.big{width:100%;min-height:62px;font-size:1.15rem}
+.btn.small{min-height:42px;padding:6px 14px;font-size:.92rem}
+.btn.quiet{background:transparent;border-color:transparent;color:var(--accent)}
+.btn.quiet:hover{background:var(--accent-soft)}
+.btn.danger{color:var(--bad)}
+.btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+[hidden]{display:none!important}
+body.has-dict .needs-nodict{display:none!important}
+body:not(.has-music) .needs-music, body:not(.has-tts) .needs-tts, body:not(.has-dict) .needs-dict{display:none!important}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.75rem;color:var(--muted)}
+.day i{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-style:normal;font-weight:700;color:var(--muted)}
+.day.done i{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day.today i{border-color:var(--gold);color:var(--gold)}
+.day.today.done i{color:var(--accent-ink);box-shadow:0 0 0 3px var(--gold-soft)}
+.day i svg{width:18px;height:18px}
+.meta{color:var(--muted);font-size:.92rem;text-align:center}
+.start{display:flex;flex-direction:column;gap:8px}
+.done-box{display:flex;gap:14px;align-items:center;background:var(--good-soft);border-radius:var(--r);padding:16px}
+.done-box svg{width:34px;height:34px;color:var(--good);flex:none}
+.done-box b{display:block}
+.section-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.section-h h3{font-size:1.1rem}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
+.item .t{font-family:var(--scripture);font-weight:600;font-size:1.08rem}
+.item .s{color:var(--muted);font-size:.9rem;grid-column:1/-1;font-family:var(--scripture);font-style:italic;min-width:0}
+.item .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.strength{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)}
+.bars{display:flex;gap:3px}
+.bars b{width:10px;height:14px;border-radius:3px;background:var(--surface-2)}
+.bars b.f{background:var(--accent)}
+.empty{color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:16px}
+.howto{color:var(--muted);font-size:.92rem}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+nav.tabs button{background:none;border:0;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.82rem;font-weight:700;color:var(--muted)}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-current="page"]{color:var(--accent)}
+.set{display:flex;flex-direction:column;gap:10px}
+.set label.h{font-weight:700}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{min-height:46px;padding:6px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.note{color:var(--muted);font-size:.9rem}
+.confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--bad-soft);padding:10px 12px;border-radius:10px}
+
+/* Lesson */
+#session{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.s-top{max-width:720px;width:100%;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px))}
+.s-top .x{width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center;color:var(--muted)}
+.s-top .x svg{width:26px;height:26px}
+.bar{flex:1;height:14px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:999px;transition:width .35s}
+.s-count{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right}
+.leave{max-width:720px;width:calc(100% - 32px);margin:0 auto 8px}
+.s-body{flex:1;overflow-y:auto}
+.s-inner{max-width:720px;margin:0 auto;padding:8px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
+.ex-h{display:flex;flex-direction:column;gap:6px}
+.ex-h h2{font-size:1.45rem}
+.ex-h .sub{color:var(--muted)}
+.ex-tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ex-tags .r{font-family:var(--scripture);font-weight:600}
+.s-foot{border-top:1px solid var(--line);background:var(--surface);padding-bottom:env(safe-area-inset-bottom,0px)}
+.s-foot.ok{background:var(--good-soft);border-color:transparent}
+.s-foot.bad{background:var(--bad-soft);border-color:transparent}
+.s-foot .in{max-width:720px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
+.fb{display:flex;flex-direction:column;gap:6px}
+.fb h3{font-size:1.2rem;display:flex;gap:8px;align-items:center}
+.fb h3 svg{width:26px;height:26px}
+.s-foot.ok .fb h3{color:var(--good)}
+.s-foot.bad .fb h3{color:var(--bad)}
+.fb .ans{font-family:var(--scripture);font-size:1.02rem;line-height:1.6;max-height:30vh;overflow-y:auto}
+.fb .ans mark{background:transparent;color:inherit;font-weight:600;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.fb .ans .miss{color:var(--bad);font-weight:600;text-decoration:underline wavy}
+.s-foot.ok .btn.primary{background:var(--good);border-color:var(--good)}
+.s-foot.bad .btn.primary{background:var(--bad);border-color:var(--bad);color:#fff}
+
+.slot{display:inline-block;min-width:4.2em;min-height:1.6em;vertical-align:baseline;padding:0 8px;margin:2px 1px;border:0;border-bottom:3px solid var(--accent);background:var(--accent-soft);border-radius:6px 6px 2px 2px;font-family:var(--scripture);font-size:inherit;line-height:1.4;color:var(--ink)}
+.slot.next{box-shadow:0 0 0 2px var(--gold)}
+.slot.right{border-color:var(--good);background:var(--good-soft)}
+.slot.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.bank{display:flex;flex-wrap:wrap;gap:10px}
+.tile{min-height:50px;padding:8px 16px;border-radius:12px;border:1px solid var(--line);border-bottom-width:3px;background:var(--surface);font-family:var(--scripture);font-size:1.08rem;text-align:left}
+.tile:hover{border-color:var(--accent)}
+.tile.used{visibility:hidden}
+.answer{min-height:80px;border:2px dashed var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px}
+.answer .tile{width:100%;background:var(--accent-soft);border-color:var(--accent)}
+.answer.right .tile{background:var(--good-soft);border-color:var(--good)}
+.answer.wrong .tile{background:var(--bad-soft);border-color:var(--bad)}
+.answer .ph{color:var(--muted);padding:8px;font-size:.92rem}
+.pool{display:flex;flex-direction:column;gap:8px}
+.pool .tile{width:100%}
+.ctx{color:var(--muted);font-family:var(--scripture);font-style:italic}
+.blank-in{font-family:var(--scripture);font-size:inherit;border:0;border-bottom:3px solid var(--accent);background:var(--accent-soft);border-radius:6px 6px 2px 2px;padding:0 6px;margin:2px 1px;color:var(--ink);min-width:3.5em}
+.blank-in.right{border-color:var(--good);background:var(--good-soft)}
+.blank-in.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.hid{display:inline-block;color:transparent;border-bottom:2px solid var(--muted);line-height:1.1;user-select:none}
+.got{color:var(--accent);font-weight:600}
+.missed{color:var(--bad);font-weight:600}
+.cursor{border-bottom-color:var(--gold);border-bottom-width:3px;background:var(--gold-soft);border-radius:4px 4px 0 0}
+.fl-in{width:100%;min-height:58px;font-size:1.3rem;text-align:center;border-radius:12px;border:2px solid var(--accent);background:var(--surface);color:var(--ink);font-family:var(--ui)}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}.bar i{transition:none}}
+textarea.recite{width:100%;min-height:150px;font-family:var(--scripture);font-size:1.12rem;line-height:1.6;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);resize:vertical}
+textarea.recite:focus{border-color:var(--accent);outline:none}
+.mic.on{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.partial{color:var(--muted);font-style:italic;min-height:1.4em}
+.hints{font-family:var(--scripture);color:var(--muted);letter-spacing:.12em;line-height:1.8;background:var(--surface-2);padding:10px 14px;border-radius:10px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{min-height:56px;padding:12px 16px;border-radius:12px;border:2px solid var(--line);background:var(--surface);text-align:left;font-family:var(--scripture);font-size:1.08rem}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.quote{font-family:var(--scripture);font-size:1.25rem;line-height:1.6;padding:16px 18px;background:var(--surface);border-radius:var(--r);border:1px solid var(--line)}
+.finish{align-items:center;text-align:center;padding-top:24px}
+.finish .seal{width:96px;height:96px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.finish .seal svg{width:52px;height:52px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 8px}
+.stat b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.8rem;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:80;max-width:calc(100% - 32px);font-size:.95rem}
+#sing{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.g-title{flex:1;display:flex;flex-direction:column;min-width:0}
+.g-title .r{font-family:var(--scripture);font-weight:600;font-size:1.2rem}
+.rounds{display:flex;gap:6px;flex-wrap:wrap}
+.rounds button{min-height:40px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:.85rem;font-weight:700;color:var(--muted)}
+.rounds button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.lyrics{font-family:var(--scripture);font-size:1.5rem;line-height:1.9;display:flex;flex-direction:column;gap:2px;padding-block:8px}
+.lline{opacity:.4;transition:opacity .2s}
+.lline.cur,.lyrics.idle .lline{opacity:1}
+.sy{border-radius:4px;padding:0 1px;transition:background .1s}
+.sy.lit{background:var(--gold-soft);box-shadow:0 0 0 2px var(--gold-soft)}
+.hy{color:var(--muted);font-size:.8em}
+.gw.rev{color:var(--accent)}
+.fl{font-weight:600}
+.g-ctrl{justify-content:space-between;align-items:center}
+.g-ctrl .btn.primary{flex:1;min-width:150px}
+.g-opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+@media (prefers-reduced-motion:reduce){.lline,.sy{transition:none}}
+@media (max-width:420px){ .lyrics{font-size:1.3rem} .day i{width:30px;height:30px} .ref{font-size:1.35rem} .verse{font-size:1.12rem} }
+</style>
+
+<style>
+:root{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0}
+html,body{overscroll-behavior-y:none}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <header class="top">
+    <span class="brand">Hidden in My Heart</span>
+    <div class="pills"><span class="pill streak" id="pStreak" title="Day streak"></span><span class="pill" id="pXp" title="Total points"></span></div>
+  </header>
+  <main id="view"></main>
+</div>
+<nav class="tabs" aria-label="Main"><div class="in">
+  <button data-tab="today" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Today</button>
+  <button data-tab="verses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M9 7h6"/></svg>Verses</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Settings</button>
+</div></nav>
+
+<div id="session" hidden>
+  <div class="s-top">
+    <button class="x" id="sClose" aria-label="Leave practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="bar"><i id="sBar"></i></div>
+    <span class="s-count" id="sCount"></span>
+  </div>
+  <div class="leave confirm" id="sLeave" hidden><span>Leave now? Today's practice won't be counted.</span><button class="btn small danger" id="sLeaveYes">Leave</button><button class="btn small" id="sLeaveNo">Keep going</button></div>
+  <div class="s-body" id="sBody"></div>
+  <div class="s-foot" id="sFoot"><div class="in"><div class="fb" id="fb" hidden></div><button class="btn primary big" id="sCheck">Check</button></div></div>
+</div>
+
+<div id="sing" hidden>
+  <div class="s-top">
+    <button class="x" id="gClose" aria-label="Close sing-along"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="g-title"><span class="r" id="gRef"></span><span class="note" id="gRound"></span></div>
+  </div>
+  <div class="s-body"><div class="s-inner">
+    <div class="rounds" id="gDots" aria-label="Rounds"></div>
+    <p class="note" id="gTip"></p>
+    <div class="lyrics idle" id="gLyrics"></div>
+  </div></div>
+  <div class="s-foot"><div class="in">
+    <div class="row g-ctrl"><button class="btn primary big" id="gPlay"></button><button class="btn" id="gNext"></button></div>
+    <div class="g-opts"><button class="btn small needs-tts" id="gEcho" aria-pressed="false">Read each line first</button><span class="seg"><button data-gspeed="slow">Slow</button><button data-gspeed="normal">Normal</button></span></div>
+  </div></div>
+</div>
+<script>
+/* ---------- Verses (World English Bible, public domain) ---------- */
+const VERSES=[
+ {id:'jhn3-16',ref:'John 3:16',tag:'God’s love',chunks:['For God so loved the world,','that he gave his only born Son,','that whoever believes in him','should not perish,','but have eternal life.']},
+ {id:'heb12-1',ref:'Hebrews 12:1–2',tag:'Run the race',chunks:['Therefore let’s also,','seeing we are surrounded','by so great a cloud of witnesses,','lay aside every weight','and the sin which so easily entangles us,','and let’s run with perseverance','the race that is set before us,','looking to Jesus,','the author and perfecter of faith,','who for the joy that was set before him','endured the cross,','despising its shame,','and has sat down at the right hand','of the throne of God.']},
+ {id:'psa23-1',ref:'Psalm 23:1–3',tag:'The Shepherd',chunks:['Yahweh is my shepherd;','I shall lack nothing.','He makes me lie down','in green pastures.','He leads me beside still waters.','He restores my soul.','He guides me in the paths of righteousness','for his name’s sake.']},
+ {id:'pro3-5',ref:'Proverbs 3:5–6',tag:'Trust',chunks:['Trust in Yahweh with all your heart,','and don’t lean on your own understanding.','In all your ways acknowledge him,','and he will make your paths straight.']},
+ {id:'php4-13',ref:'Philippians 4:13',tag:'Strength',chunks:['I can do all things','through Christ','who strengthens me.']},
+ {id:'jos1-9',ref:'Joshua 1:9',tag:'Courage',chunks:['Haven’t I commanded you?','Be strong and courageous.','Don’t be afraid.','Don’t be dismayed,','for Yahweh your God is with you','wherever you go.']},
+ {id:'rom8-28',ref:'Romans 8:28',tag:'His purpose',chunks:['We know that all things','work together for good','for those who love God,','for those who are called','according to his purpose.']},
+ {id:'jer29-11',ref:'Jeremiah 29:11',tag:'Hope',chunks:['“For I know the thoughts','that I think toward you,”','says Yahweh,','“thoughts of peace, and not of evil,','to give you hope and a future.”']},
+ {id:'psa119-11',ref:'Psalm 119:11',tag:'God’s word',chunks:['I have hidden your word','in my heart,','that I might not sin','against you.']},
+ {id:'isa41-10',ref:'Isaiah 41:10',tag:'Fear not',chunks:['Don’t you be afraid,','for I am with you.','Don’t be dismayed,','for I am your God.','I will strengthen you.','Yes, I will help you.','Yes, I will uphold you','with the right hand of my righteousness.']},
+ {id:'mat11-28',ref:'Matthew 11:28',tag:'Rest',chunks:['Come to me,','all you who labor','and are heavily burdened,','and I will give you rest.']},
+ {id:'isa40-31',ref:'Isaiah 40:31',tag:'Renewed strength',chunks:['But those who wait for Yahweh','will renew their strength.','They will mount up','with wings like eagles.','They will run, and not be weary.','They will walk, and not faint.']},
+ {id:'mat6-33',ref:'Matthew 6:33',tag:'Priorities',chunks:['But seek first God’s Kingdom','and his righteousness;','and all these things','will be given to you as well.']},
+ {id:'rom12-2',ref:'Romans 12:2',tag:'Renewed mind',chunks:['Don’t be conformed to this world,','but be transformed','by the renewing of your mind,','so that you may prove what is the good,','well-pleasing,','and perfect will of God.']},
+ {id:'eph2-8',ref:'Ephesians 2:8–9',tag:'Grace',chunks:['for by grace you have been saved','through faith,','and that not of yourselves;','it is the gift of God,','not of works,','that no one would boast.']},
+ {id:'2ti3-16',ref:'2 Timothy 3:16–17',tag:'Scripture',chunks:['Every Scripture is God-breathed','and profitable for teaching,','for reproof, for correction,','and for instruction in righteousness,','that each person who belongs to God','may be complete,','thoroughly equipped for every good work.']}
+];
+const STRENGTH=['','New','Growing','Steady','Strong','Rooted','Hidden in heart'];
+const INTERVAL=[0,1,2,4,7,14,30,60,90];
+const STOP=new Set('the a an and of to in that for he him his i me my is so be with we us you your it its who which has have all but not are was set by on at as do can will shall our lets this from into also'.split(' '));
+
+/* ---------- Small helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm=s=>String(s).toLowerCase().replace(/[’']/g,'').replace(/[^a-z0-9]/g,'');
+function hash(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}return h>>>0}
+function rng(seed){let a=typeof seed==='number'?seed:hash(String(seed));return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuffle(a,r){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const pick=(a,n,r)=>shuffle(a,r).slice(0,n);
+function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+const close=(a,b)=>{a=norm(a);b=norm(b);return a===b||(b.length>=5&&lev(a,b)<=1)};
+function splitTok(t){const m=t.match(/^([^A-Za-z0-9]*)(.*?)([^A-Za-z0-9]*)$/);return{pre:m[1],core:m[2],post:m[3]}}
+const VCACHE={};
+function V(id){return VERSES.find(v=>v.id===id)}
+function words(v){if(VCACHE[v.id])return VCACHE[v.id];const out=[];v.chunks.forEach((c,ci)=>c.split(' ').forEach(t=>{const s=splitTok(t);out.push({t,ci,...s,n:norm(s.core)})}));return VCACHE[v.id]=out}
+const isContent=w=>w.n.length>=3&&!STOP.has(w.n);
+const fullText=v=>v.chunks.join(' ');
+
+/* ---------- Dates & state ---------- */
+const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const pd=s=>new Date(s+'T12:00:00');
+const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const diffDays=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
+const KEY='hidden-in-my-heart-v1';
+function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},settings:{music:true,autoplay:false,tempo:'normal',size:'large'}}}
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
+if(!state||!state.start)state=fresh();
+state.settings=Object.assign(fresh().settings,state.settings||{});
+VERSES.forEach(v=>{if(!state.order.includes(v.id))state.order.push(v.id)});
+state.retired=state.retired||{};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+const today=()=>addDays(ymd(new Date()),state.offset);
+function weekPos(){const d=Math.max(0,diffDays(state.start,today()));return{w:Math.floor(d/7),day:d%7}}
+function weekVerse(){const{w}=weekPos();return w<state.order.length?V(state.order[w]):null}
+function learnedIds(){const{w}=weekPos();return state.order.slice(0,Math.min(w,state.order.length))}
+function syncLearned(){learnedIds().forEach(id=>{if(!state.srs[id])state.srs[id]={box:state.weekCheck[id]?2:1,due:today(),last:null}})}
+function streak(){let d=today();if(!state.log[d]?.done)d=addDays(d,-1);let n=0;while(state.log[d]?.done){n++;d=addDays(d,-1)}return n}
+const totalXp=()=>Object.values(state.log).reduce((s,x)=>s+(x.xp||0),0);
+function dueReviews(limit){syncLearned();const t=today();const ids=learnedIds().filter(id=>!state.retired[id]);
+  const od=id=>(diffDays(state.srs[id].due,t)+1)/INTERVAL[state.srs[id].box];
+  let due=ids.filter(id=>state.srs[id].due<=t).sort((a,b)=>od(b)-od(a));
+  if(!due.length&&ids.length)due=ids.slice().sort((a,b)=>(state.srs[a].last||'').localeCompare(state.srs[b].last||'')).slice(0,1);
+  return due.slice(0,limit)}
+
+/* ---------- Icons ---------- */
+const IC={
+ play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
+ stop:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+ note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
+ speak:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+ mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+ check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5 5.5 5 10.5A5 5 0 0 1 7 13c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-6.5 1-9.5z"/></svg>',
+ star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>',
+ eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+};
+
+/* ---------- Melody engine (Web Audio) ---------- */
+let AC=null,PLAY=null;const TUNES={};
+function ac(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(e){return null}}
+const SYL={};
+const BLENDS=['bl','cl','fl','gl','pl','sl','br','cr','dr','fr','gr','pr','tr','st','wr','qu'];
+function sylls(word){const lw=word.toLowerCase();if(lw.replace(/[^a-z]/g,'').length<=3)return[word];
+  const isV=i=>{const c=lw[i];if('aeiou'.includes(c))return true;return c==='y'&&i>0&&!'aeiou'.includes(lw[i-1])};
+  let g=[];for(let i=0;i<lw.length;i++){if(isV(i)){let j=i;while(j+1<lw.length&&isV(j+1)&&lw[j+1]!=='y')j++;g.push([i,j]);i=j}}
+  if(g.length>1){const[a,b]=g[g.length-1],tail=lw.slice(b+1),before=lw.slice(0,a);
+    if(a===b&&lw[a]==='e'){if(tail===''&&!/[^aeiou]l$/.test(before))g.pop();else if(tail==='s'&&!/(s|x|z|ch|sh|c|g)$/.test(before)&&!/[^aeiou]l$/.test(before))g.pop();else if(tail==='d'&&!/[td]$/.test(before))g.pop()}}
+  if(g.length<=1)return[word];
+  const cuts=g.slice(0,-1).map((x,k)=>{const e=x[1],n=g[k+1][0],cons=n-e-1;if(cons<=1)return e+1;
+    const two=lw.slice(n-2,n);if(['th','sh','ch','wh'].includes(two))return n-2;if(['ck','ng'].includes(two))return n;if(BLENDS.includes(two)&&cons>2)return n-2;return n-1});
+  const parts=[];let q=0;cuts.forEach(c=>{parts.push(word.slice(q,c));q=c});parts.push(word.slice(q));return parts.filter(Boolean)}
+function sylInfo(v){if(SYL[v.id])return SYL[v.id];let n=0;return SYL[v.id]=words(v).map(w=>{const parts=sylls(w.core);const o={parts,s0:n};n+=parts.length;return o})}
+function tune(v){if(TUNES[v.id])return TUNES[v.id];
+  const r=rng('tune:'+v.id),root=60+Math.floor(r()*5),P=[0,2,4,7,9,12,14,16];
+  const motif=()=>{let d=2+Math.floor(r()*3);const a=[];for(let i=0;i<12;i++){a.push(d);d=Math.max(0,Math.min(6,d+[-1,1,1,-1,2,-2,0,1][Math.floor(r()*8)]))}return a};
+  const A=motif(),B=motif(),W=words(v),SI=sylInfo(v),notes=[],lines=[];let t=0;
+  v.chunks.forEach((c,ci)=>{const m=ci%2?B:A,last=ci===v.chunks.length-1,t0=t;let prev=2,k=0;
+    const idx=W.map((w,i)=>i).filter(i=>W[i].ci===ci),total=idx.reduce((n,i)=>n+SI[i].parts.length,0);
+    idx.forEach(wi=>SI[wi].parts.forEach((pt,pk)=>{const end=k===total-1;let deg=m[k%m.length];if(end)deg=last||ci%2?(prev>=3?5:0):3;
+      const dur=end?2:(SI[wi].parts.length===1&&W[wi].n.length>=6?1.5:1);
+      notes.push({t,dur,midi:root+P[deg],w:wi,s:SI[wi].s0+pk});prev=deg;t+=dur;k++}));
+    lines.push({t0,t1:t,bass:root-12+(last?0:[0,5,7,0][ci%4]),ci});t+=0.5});
+  return TUNES[v.id]={notes,lines,total:t}}
+function voice(ctx,out,midi,s,d){const f=440*Math.pow(2,(midi-69)/12);
+  [['triangle',1,0.22],['sine',2,0.04]].forEach(([type,mul,vol])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f*mul;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.025);g.gain.exponentialRampToValueAtTime(vol*0.45,s+Math.min(0.25,d*0.5));g.gain.exponentialRampToValueAtTime(0.0001,s+d);
+    o.connect(g);g.connect(out);o.start(s);o.stop(s+d+0.05)})}
+function pad(ctx,out,midi,s,d){[0,7,12].forEach((iv,k)=>{const o=ctx.createOscillator(),g=ctx.createGain(),vol=k?0.03:0.06;o.type='sine';o.frequency.value=440*Math.pow(2,(midi+iv-69)/12);
+  g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.12);g.gain.setValueAtTime(vol,s+Math.max(0.13,d-0.2));g.gain.exponentialRampToValueAtTime(0.0001,s+d+0.4);
+  o.connect(g);g.connect(out);o.start(s);o.stop(s+d+0.5)})}
+function playTune(v,{chunk=null,onWord=null,onNote=null,onEnd=null}={}){stopTune();const ctx=ac();if(!ctx)return false;
+  const tn=tune(v),beat=state.settings.tempo==='slow'?0.62:0.44;let notes=tn.notes,lines=tn.lines,off=0,end=tn.total;
+  if(chunk!=null){const L=tn.lines[chunk];notes=notes.filter(n=>n.t>=L.t0&&n.t<L.t1);lines=[L];off=L.t0;end=L.t1}
+  const master=ctx.createGain();master.gain.value=0.9;master.connect(ctx.destination);
+  const T=ctx.currentTime+0.08,timers=[];
+  notes.forEach(n=>{const s=T+(n.t-off)*beat;voice(ctx,master,n.midi,s,n.dur*beat*0.95);if(onWord||onNote)timers.push(setTimeout(()=>{onWord&&onWord(n.w);onNote&&onNote(n)},(s-ctx.currentTime)*1000))});
+  lines.forEach(L=>pad(ctx,master,L.bass,T+(L.t0-off)*beat,(L.t1-L.t0)*beat));
+  timers.push(setTimeout(()=>{const cb=PLAY&&PLAY.onEnd;PLAY=null;cb&&cb()},((end-off)*beat+0.4)*1000));
+  PLAY={master,timers,onEnd};return true}
+function stopTune(){if(!PLAY)return;const p=PLAY;PLAY=null;p.timers.forEach(clearTimeout);try{p.master.gain.setTargetAtTime(0,AC.currentTime,0.03);setTimeout(()=>p.master.disconnect(),250)}catch(e){}p.onEnd&&p.onEnd()}
+function karaoke(btn,v,root){ // toggles play/stop on a button, lighting words inside root
+  if(PLAY&&btn.classList.contains('on')){stopTune();return}
+  const ws=$$('.w',root);
+  const reset=()=>{btn.classList.remove('on');btn.innerHTML=IC.note+'<span>Play the tune</span>';ws.forEach(x=>x.classList.remove('lit'))};
+  const ok=playTune(v,{onWord:i=>{ws.forEach(x=>x.classList.toggle('lit',+x.dataset.w===i))},onEnd:reset});
+  if(ok){btn.classList.add('on');btn.innerHTML=IC.stop+'<span>Stop</span>'}}
+
+/* ---------- Claude voice: dictation + read aloud ---------- */
+let DICT=null,TTS=null,dictTarget=null,dictPartial=null;
+function deviceVoice(){return{speak(text){return new Promise((res,rej)=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=0.9;u.lang='en-US';u.onend=()=>res();u.onerror=e=>rej({code:e.error||'upstream_error'});speechSynthesis.speak(u)}catch(e){rej({code:'unavailable'})}})},stop(){try{speechSynthesis.cancel()}catch(e){}}}}
+async function initCaps(){
+  if(!(window.claude&&window.claude.use)){if('speechSynthesis' in window){TTS=deviceVoice();document.body.classList.add('has-tts')}return}
+  try{DICT=await window.claude.use('dictation')}catch(e){DICT=null}
+  try{TTS=await window.claude.use('tts')}catch(e){TTS=null}
+  if(DICT){document.body.classList.add('has-dict');
+    DICT.onFinal(({text})=>{if(!dictTarget)return;const cur=dictTarget.value;dictTarget.value=cur?cur+text:text.trimStart();dictTarget.dispatchEvent(new Event('input',{bubbles:true}))});
+    DICT.onPartial(({text})=>{if(dictPartial)dictPartial.textContent=text});
+    DICT.onState(({state:st,reason})=>{$$('.mic').forEach(b=>{const on=st!=='idle';b.classList.toggle('on',on);b.querySelector('span').textContent=on?'Listening… tap to stop':'Say it aloud'});
+      if(st==='idle'){if(dictPartial)dictPartial.textContent='';if(reason==='unavailable'||reason==='not_granted')document.body.classList.remove('has-dict')}})}
+  if(!TTS&&'speechSynthesis' in window)TTS=deviceVoice();
+  if(TTS)document.body.classList.add('has-tts')}
+function micClick(ta){if(!DICT)return;if(DICT.active()){DICT.stop().catch(()=>{});return}
+  dictTarget=ta;DICT.start().catch(e=>{const m={not_granted:'Microphone access was declined. You can still type your answer.',dismissed:'Tap the microphone again when you’re ready.',unavailable:'Voice input isn’t available here. You can type instead.',rate_limited:'Voice input is busy. Try again in a moment.',stopped:''}[e.code];
+    if(m!=='')toast(m||'Voice input stopped. You can type instead.');if(e.code==='not_granted'||e.code==='unavailable')document.body.classList.remove('has-dict')})}
+function speak(text){if(!TTS)return;stopTune();TTS.speak(text.replace(/[“”]/g,'')).catch(()=>{})}
+function stopAll(){stopTune();try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}try{TTS&&TTS.stop()}catch(e){}}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;t.setAttribute('role','status');document.body.appendChild(t);setTimeout(()=>t.remove(),3800)}
+
+/* ---------- Shared rendering ---------- */
+function verseHTML(v){const W=words(v);let html='',ci=-1;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}html+=`<span class="w" data-w="${i}">${esc(w.t)}</span> `});return `<div class="verse">${html}</span></div>`}
+function strengthHTML(id){const b=Math.min(6,state.srs[id]?.box||0);return `<span class="strength"><span class="bars">${[1,2,3,4,5,6].map(k=>`<b class="${k<=b?'f':''}"></b>`).join('')}</span>${STRENGTH[b]||'Not started'}</span>`}
+function applySettings(){const sz={standard:'16px',large:'18px',xl:'21px'}[state.settings.size]||'18px';document.documentElement.style.setProperty('--fs',sz);document.body.classList.toggle('has-music',!!state.settings.music)}
+const niceDate=s=>pd(s).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+
+/* ---------- Session plans ---------- */
+const PLAN=[
+ [['listen'],['bank',2],['order'],['bank',3]],
+ [['listen'],['order'],['bank',4],['type',1]],
+ [['listen'],['bank',5],['first',0.5],['type',2]],
+ [['order'],['first',1],['type',3]],
+ [['listen'],['first',1],['recite',true]],
+ [['order'],['type',5],['recite',true]],
+ [['first',0.5],['recite',false]]
+];
+function reviewItem(id,seed){const b=state.srs[id]?.box||1;const k=[null,['bank',3],['order'],['type',3],['ref'],['first',1],['recite',false]][Math.min(b,6)];return{kind:k[0],p:k[1],vid:id,review:true,seed}}
+function dailyItems(){const t=today(),{day}=weekPos(),wv=weekVerse();const learn=[];
+  if(wv)PLAN[day].forEach((p,i)=>learn.push({kind:p[0],p:p[1],vid:wv.id,seed:hash(t+wv.id+i),week:day===6&&p[0]==='recite'}));
+  const revs=dueReviews(wv?2:5).map((id,i)=>reviewItem(id,hash(t+id+'r'+i)));
+  const out=learn.slice();
+  if(revs[0])out.splice(Math.min(2,out.length),0,revs[0]);
+  revs.slice(1).forEach(r=>out.splice(Math.max(out.length-1,1),0,r));
+  if(!wv&&!out.length&&revs.length)return revs;
+  return out.map((x,i)=>({...x,key:'k'+i}))}
+function extraItems(id){const learned=learnedIds().includes(id)||weekVerse()?.id===id;const seed=hash(Date.now()+id);
+  const p=learned?[['order'],['first',1],['recite',true]]:[['listen'],['bank',2],['order']];
+  return p.map((x,i)=>({kind:x[0],p:x[1],vid:id,seed:seed+i,key:'e'+i}))}
+
+/* ---------- Exercises ---------- */
+function humBtn(){return `<button class="btn small quiet needs-music" data-hum>${IC.note}<span>Hum the line</span></button>`}
+function exListen(it){const v=V(it.vid);return{noGrade:true,title:'Listen and read along',sub:'Read each line out loud with the tune. Phrases are split where you’d take a breath.',
+  html:()=>`<div class="card">${verseHTML(v)}<div class="row"><button class="btn needs-music" data-tune>${IC.note}<span>Play the tune</span></button><button class="btn needs-tts" data-say>${IC.speak}<span>Read it to me</span></button></div></div>`,
+  mount(root){const b=$('[data-tune]',root);b&&b.addEventListener('click',()=>karaoke(b,v,root));$('[data-say]',root)?.addEventListener('click',()=>speak(fullText(v)));
+    if(state.settings.music&&state.settings.autoplay&&b)setTimeout(()=>{if(S&&S.cur&&S.cur.root===root&&!PLAY)karaoke(b,v,root)},500)}}}
+
+function exBank(it){const v=V(it.vid),W=words(v),r=rng(it.seed);
+  const cand=W.map((w,i)=>i).filter(i=>isContent(W[i]));const seen=new Set();
+  const blanks=pick(cand,Math.min(it.p,cand.length),r).sort((a,b)=>a-b);
+  const ans=new Set(blanks.map(i=>W[i].n));
+  const others=[];VERSES.filter(x=>x.id!==v.id).forEach(x=>words(x).forEach(w=>{if(isContent(w)&&!ans.has(w.n)&&!seen.has(w.n)){seen.add(w.n);others.push(w.core)}}));
+  const bank=shuffle([...blanks.map(i=>W[i].core),...pick(others,2,r)],r);
+  const fills=blanks.map(()=>null);let root,api;
+  function draw(){const nx=fills.indexOf(null);$$('.slot',root).forEach((s,k)=>{s.textContent=fills[k]==null?' ':bank[fills[k]];s.classList.toggle('next',k===nx)});
+    $$('.bank .tile',root).forEach((t,j)=>t.classList.toggle('used',fills.includes(j)));api.ready(!fills.includes(null))}
+  return{title:'Fill in the missing words',sub:'Tap a word to place it. Tap a filled blank to take it back.',
+   html(){let html='',ci=-1,k=0;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}
+      html+=blanks.includes(i)?`${esc(w.pre)}<button class="slot" data-k="${k++}" aria-label="Blank ${k}"> </button>${esc(w.post)} `:`<span class="w">${esc(w.t)}</span> `});
+     return `<div class="card"><div class="verse">${html}</span></div></div><div class="bank">${bank.map((b,j)=>`<button class="tile" data-j="${j}">${esc(b)}</button>`).join('')}</div><div>${humBtn()}</div>`},
+   mount(rt,a){root=rt;api=a;
+     root.addEventListener('click',e=>{const t=e.target.closest('.tile'),s=e.target.closest('.slot');if(S.state!=='answer')return;
+       if(t){const j=+t.dataset.j,k=fills.indexOf(null);if(k>=0&&!fills.includes(j)){fills[k]=j;draw()}}
+       if(s){fills[+s.dataset.k]=null;draw()}
+       if(e.target.closest('[data-hum]')){const k=Math.max(0,fills.indexOf(null));playTune(v,{chunk:W[blanks[k]].ci})}});draw()},
+   check(){let ok=true;$$('.slot',root).forEach((s,k)=>{const good=fills[k]!=null&&norm(bank[fills[k]])===W[blanks[k]].n;s.classList.add(good?'right':'wrong');if(!good)ok=false});
+     return{ok,ans:answerVerse(v,blanks)}}}}
+
+function answerVerse(v,marks){const W=words(v);return v.chunks.map((c,ci)=>W.map((w,i)=>w.ci!==ci?null:(marks.includes(i)?`${esc(w.pre)}<mark>${esc(w.core)}</mark>${esc(w.post)}`:esc(w.t))).filter(x=>x!=null).join(' ')).join('<br>')}
+
+function exOrder(it){const v=V(it.vid),L=v.chunks.length,r=rng(it.seed);let s=0,e=L;
+  if(L>6){s=it.seed%(L-5);e=s+6}
+  const idx=[];for(let i=s;i<e;i++)idx.push(i);let tiles=shuffle(idx,r);if(tiles.every((x,i)=>x===idx[i]))tiles=tiles.slice().reverse();
+  const picked=[];let root,api;
+  function draw(){const a=$('.answer',root),p=$('.pool',root);
+    a.innerHTML=picked.length?picked.map(ci=>`<button class="tile" data-c="${ci}">${esc(v.chunks[ci])}</button>`).join(''):'<span class="ph">Tap the phrases below in order.</span>';
+    p.innerHTML=tiles.filter(ci=>!picked.includes(ci)).map(ci=>`<button class="tile" data-c="${ci}">${esc(v.chunks[ci])}</button>`).join('');api.ready(picked.length===tiles.length)}
+  return{title:'Put the phrases in order',sub:s>0||e<L?'This is one section of a longer passage.':'Rebuild the verse one phrase at a time.',
+   html:()=>`${s>0?`<p class="ctx">…${esc(v.chunks[s-1])}</p>`:''}<div class="answer"></div><div class="pool"></div>${e<L?'<p class="ctx">…</p>':''}<div>${humBtn()}</div>`,
+   mount(rt,a){root=rt;api=a;root.addEventListener('click',ev=>{if(S.state!=='answer')return;const t=ev.target.closest('.tile');
+     if(t){const c=+t.dataset.c;if(t.closest('.answer'))picked.splice(picked.indexOf(c),1);else picked.push(c);draw()}
+     if(ev.target.closest('[data-hum]'))playTune(v,{chunk:idx[picked.length]??idx[0]})});draw()},
+   check(){const ok=picked.every((c,i)=>c===idx[i]);$('.answer',root).classList.add(ok?'right':'wrong');return{ok,ans:idx.map(i=>esc(v.chunks[i])).join('<br>')}}}}
+
+function exType(it){const v=V(it.vid),W=words(v),r=rng(it.seed+3);
+  const cand=W.map((w,i)=>i).filter(i=>isContent(W[i]));const blanks=pick(cand,Math.min(it.p,cand.length),r).sort((a,b)=>a-b);let root,api;
+  return{title:it.p===1?'Type the missing word':'Type the missing words',sub:'The first letter is shown as a hint. Spelling doesn’t have to be perfect.',
+   html(){let html='',ci=-1,k=0;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}
+     html+=blanks.includes(i)?`${esc(w.pre)}<input class="blank-in" id="bi-${k}" data-k="${k++}" style="width:${Math.max(3.5,w.core.length*0.7+1.5)}em" placeholder="${esc(w.core[0])}…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Missing word ${k}">${esc(w.post)} `:`<span class="w">${esc(w.t)}</span> `});
+     return `<div class="card"><div class="verse">${html}</span></div></div><div>${humBtn()}</div>`},
+   mount(rt,a){root=rt;api=a;const ins=$$('.blank-in',root);
+     root.addEventListener('input',()=>api.ready(ins.every(x=>x.value.trim())));
+     root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('blank-in')){e.preventDefault();const k=+e.target.dataset.k;if(ins[k+1]&&!ins[k+1].value)ins[k+1].focus();else api.submit()}});
+     root.addEventListener('click',e=>{if(e.target.closest('[data-hum]')){const k=Math.max(0,ins.findIndex(x=>!x.value.trim()));playTune(v,{chunk:W[blanks[k]].ci})}});
+     setTimeout(()=>ins[0]&&ins[0].focus({preventScroll:true}),60)},
+   check(){let ok=true;$$('.blank-in',root).forEach((x,k)=>{const g=close(x.value,W[blanks[k]].core);x.classList.add(g?'right':'wrong');x.readOnly=true;if(!g)ok=false});return{ok,ans:answerVerse(v,blanks)}}}}
+
+function exFirst(it){const v=V(it.vid),W=words(v);let end=W.length;
+  if(it.p<1){const half=Math.ceil(W.length*it.p);end=W.findIndex((w,i)=>i>=half-1&&(i===W.length-1||W[i+1].ci!==w.ci))+1||W.length}
+  let pos=0,miss=new Set(),wrongHere=0,root,api;
+  const first=w=>(w.n||'?')[0];
+  function draw(){$$('.vw',root).forEach(el=>{const i=+el.dataset.w;if(i>=end)return;
+    if(i<pos){el.className='vw '+(miss.has(i)?'missed':'got');el.textContent=W[i].t}
+    else{el.className='vw hid'+(i===pos?' cursor':'');el.textContent=W[i].t}});
+    const c=$('.fl-count',root);c.textContent=`${Math.min(pos,end)} of ${end} words`}
+  function advance(isMiss){if(isMiss)miss.add(pos);pos++;wrongHere=0;draw();if(pos>=end){$('.fl-in',root).disabled=true;api.ready(true);setTimeout(()=>api.submit(),350)}}
+  return{title:'First-letter recall',sub:'Say each word in your head, then type just its first letter. The word appears when you get it.',
+   html(){let html='',ci=-1;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}html+=i<end?`<span class="vw hid" data-w="${i}">${esc(w.t)}</span> `:`<span class="ctx">${esc(w.t)}</span> `});
+     return `<div class="card"><div class="verse">${html}</span></div></div><input class="fl-in" id="fl-in" placeholder="Type first letters here" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="First letter of the next word"><div class="row" style="justify-content:space-between;align-items:center"><span class="note fl-count"></span><span class="row"><button class="btn small quiet" data-reveal>${IC.eye}<span>Show next word</span></button>${humBtn()}</span></div>`},
+   mount(rt,a){root=rt;api=a;const inp=$('.fl-in',root);draw();
+     inp.addEventListener('input',()=>{const chars=norm(inp.value);inp.value='';for(const ch of chars){if(pos>=end)break;
+       if(ch===first(W[pos]))advance(false);else{wrongHere++;inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');if(wrongHere>=3)advance(true)}}});
+     root.addEventListener('click',e=>{if(S.state!=='answer')return;if(e.target.closest('[data-reveal]')&&pos<end){advance(true);inp.focus()}
+       if(e.target.closest('[data-hum]')&&pos<end)playTune(v,{chunk:W[pos].ci})});
+     setTimeout(()=>inp.focus({preventScroll:true}),60)},
+   check(){while(pos<end)advance(true);const score=(end-miss.size)/end;const ok=score>=0.85;
+     return{ok,ans:`${Math.round(score*100)}% of words recalled on your own.`+(miss.size?`<br>${[...miss].map(i=>`<span class="miss">${esc(W[i].core)}</span>`).join(', ')} needed help.`:'')}}}}
+
+function diffWords(v,said){const T=words(v),A=said.split(/\s+/).map(norm).filter(Boolean);const m=T.length,n=A.length;
+  const dp=Array.from({length:m+1},()=>new Uint16Array(n+1));
+  for(let i=m-1;i>=0;i--)for(let j=n-1;j>=0;j--)dp[i][j]=(T[i].n===A[j]||(T[i].n.length>=5&&lev(T[i].n,A[j])<=1))?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const hit=new Set();let i=0,j=0;while(i<m&&j<n){if((T[i].n===A[j]||(T[i].n.length>=5&&lev(T[i].n,A[j])<=1))&&dp[i][j]===dp[i+1][j+1]+1){hit.add(i);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++}
+  return{score:m?hit.size/m:0,hit}}
+function exRecite(it){const v=V(it.vid),W=words(v);let root,api;const hints=v.chunks.map(c=>c.split(' ').map(t=>{const s=splitTok(t);return (s.core[0]||'')+s.post}).join(' ')).join('<br>');
+  return{title:it.testout?'Test out: say it from memory':it.week?'Week check: say it from memory':'Say it from memory',sub:'Speak or type the whole passage. Small slips are fine; aim for about 80% of the words.',
+   html:()=>`<div class="quote"><span class="r">${esc(v.ref)}</span></div>
+     <div class="hints" ${it.p?'':'hidden'} aria-label="First-letter hints">${esc(hints).replace(/&lt;br&gt;/g,'<br>')}</div>
+     <textarea class="recite" id="recite-ta" placeholder="Start with “${esc(W[0].core)}…”" aria-label="Your recitation"></textarea>
+     <p class="partial" aria-live="polite"></p>
+     <div class="row"><button class="btn mic needs-dict" data-mic>${IC.mic}<span>Say it aloud</span></button>${it.p?'':`<button class="btn small quiet" data-hints>${IC.eye}<span>Show first letters</span></button>`}${humBtn()}</div>
+     <p class="note needs-nodict">Tip: on a phone, your keyboard’s microphone key works here too.</p>`,
+   mount(rt,a){root=rt;api=a;const ta=$('textarea',root);dictPartial=$('.partial',root);
+     ta.addEventListener('input',()=>api.ready(ta.value.trim().split(/\s+/).length>=Math.min(3,W.length)));
+     root.addEventListener('click',e=>{if(e.target.closest('[data-mic]'))micClick(ta);
+       if(e.target.closest('[data-hints]')){$('.hints',root).hidden=false;e.target.closest('[data-hints]').remove()}
+       if(e.target.closest('[data-hum]'))karaokeless(v)})},
+   check(){if(DICT&&DICT.active())DICT.stop().catch(()=>{});const{score,hit}=diffWords(v,$('textarea',root).value);const ok=score>=0.8;
+     return{ok,ans:`<b>${Math.round(score*100)}% of the words.</b><br>`+v.chunks.map((c,ci)=>W.map((w,i)=>w.ci!==ci?null:(hit.has(i)?esc(w.t):`${esc(w.pre)}<span class="miss">${esc(w.core)}</span>${esc(w.post)}`)).filter(x=>x!=null).join(' ')).join('<br>')}}}}
+function karaokeless(v){if(PLAY){stopTune();return}playTune(v)}
+
+function exRef(it){const v=V(it.vid),r=rng(it.seed),kindA=r()<0.5;const others=pick(VERSES.filter(x=>x.id!==v.id),2,r);const opts=shuffle([v,...others],r);let sel=null,root,api;
+  return{title:kindA?'Which passage is this?':'How does this passage begin?',sub:kindA?'Pick the reference that matches these words.':'Pick the opening words.',
+   html:()=>`<div class="quote">${kindA?`“${esc(v.chunks.slice(0,2).join(' ').replace(/[“”]/g,''))} …”`:`<span class="r">${esc(v.ref)}</span>`}</div>
+     <div class="opts">${opts.map(o=>`<button class="opt" data-id="${o.id}" aria-pressed="false">${esc(kindA?o.ref:o.chunks[0].replace(/[“”]/g,'')+' …')}</button>`).join('')}</div>`,
+   mount(rt,a){root=rt;api=a;root.addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||S.state!=='answer')return;sel=b.dataset.id;$$('.opt',root).forEach(x=>x.setAttribute('aria-pressed',x===b));api.ready(true)})},
+   check(){const ok=sel===v.id;$$('.opt',root).forEach(x=>{if(x.dataset.id===v.id)x.classList.add('right');else if(x.dataset.id===sel)x.classList.add('wrong')});return{ok,ans:`<b>${esc(v.ref)}</b><br>${esc(fullText(v))}`}}}}
+
+function build(it){return({listen:exListen,bank:exBank,order:exOrder,type:exType,first:exFirst,recite:exRecite,ref:exRef})[it.kind](it)}
+
+/* ---------- Session engine ---------- */
+let S=null;const body=$('#sBody'),btn=$('#sCheck'),foot=$('#sFoot'),fb=$('#fb');
+const api={ready(b){if(S&&S.state==='answer')btn.disabled=!b},submit(){if(S&&S.state==='answer'&&!btn.disabled)onCheck()}};
+function startSession(items,mode,label){stopAll();if(!items.length){toast('Nothing to practice right now.');return}
+  S={items:items.slice(),i:0,mode,label,first:{},xp:0,t0:Date.now(),retried:0};
+  $('#session').hidden=false;$('#sLeave').hidden=true;document.body.style.overflow='hidden';showEx()}
+function showEx(){const it=S.items[S.i],v=V(it.vid),ex=build(it);S.cur=ex;S.state='answer';
+  foot.className='s-foot';fb.hidden=true;fb.innerHTML='';
+  body.innerHTML=`<div class="s-inner"><div class="ex-h"><div class="ex-tags">${it.review?'<span class="chip gold">Callback</span>':it.retry?'<span class="chip muted">One more try</span>':'<span class="chip">This week</span>'}<span class="r">${esc(v.ref)}</span></div><h2>${esc(ex.title)}</h2><p class="sub">${esc(ex.sub)}</p></div><div class="ex-b"></div></div>`;
+  const root=$('.ex-b',body);ex.root=root;root.innerHTML=ex.html();ex.mount(root,api);body.scrollTop=0;
+  btn.textContent=ex.noGrade?'Continue':'Check';btn.disabled=!ex.noGrade;
+  $('#sBar').style.width=(S.i/S.items.length*100)+'%';$('#sCount').textContent=`${S.i+1} / ${S.items.length}`}
+const PRAISE=['Well done!','That’s it!','Right on.','Beautiful.','You’ve got it.'];
+function onCheck(){if(!S)return;if(S.state==='feedback'){next();return}
+  const it=S.items[S.i];if(S.cur.noGrade){S.xp+=5;next();return}
+  const res=S.cur.check();stopTune();
+  if(!(it.key in S.first))S.first[it.key]={ok:res.ok,it};
+  if(res.ok)S.xp+=it.retry?5:10;
+  else if(!it.retry&&S.retried<3&&S.mode!=='testout'){S.items.push({...it,retry:true,seed:it.seed+101,key:it.key});S.retried++}
+  S.state='feedback';foot.className='s-foot '+(res.ok?'ok':'bad');
+  fb.innerHTML=`<h3>${res.ok?IC.check:IC.x}${res.ok?PRAISE[S.i%PRAISE.length]:'Not quite. Here’s how it goes:'}</h3>${res.ok&&!['first','recite'].includes(it.kind)?'':`<div class="ans">${res.ans}</div>`}${!res.ok&&!it.retry&&S.mode!=='testout'?'<p class="note">You’ll see this one again at the end.</p>':''}`;
+  fb.hidden=false;btn.textContent='Continue';btn.disabled=false;btn.focus({preventScroll:true});
+  $('#sBar').style.width=((S.i+1)/S.items.length*100)+'%'}
+function next(){stopAll();S.i++;if(S.i>=S.items.length)finish();else showEx()}
+function finish(){const t=today(),firsts=Object.values(S.first),right=firsts.filter(f=>f.ok).length;
+  const lg=state.log[t]||(state.log[t]={xp:0,done:false});lg.xp+=S.xp;
+  let revNote='';
+  if(S.mode==='daily'){const{day}=weekPos(),wv=weekVerse();lg.done=true;
+    if(wv){const arr=state.weekDays[wv.id]||(state.weekDays[wv.id]=[]);if(!arr.includes(day))arr.push(day);
+      const wc=firsts.find(f=>f.it.week);if(wc&&wc.ok)state.weekCheck[wv.id]=true}
+    const byV={};firsts.forEach(f=>{if(f.it.review)(byV[f.it.vid]=byV[f.it.vid]||[]).push(f.ok)});
+    Object.entries(byV).forEach(([id,res])=>{const s=state.srs[id],ok=res.every(Boolean);if(s.last===t)return;s.box=ok?Math.min(8,s.box+1):Math.max(1,Math.min(s.box-1,3));s.due=addDays(t,ok?INTERVAL[s.box]:1);s.last=t});
+    revNote=Object.keys(byV).map(id=>`<div class="item"><span class="t">${esc(V(id).ref)}</span>${strengthHTML(id)}<span class="s">Next callback: ${state.srs[id].due===addDays(t,1)?'tomorrow':niceDate(state.srs[id].due)}</span></div>`).join('')}
+  let toMsg='';if(S.mode==='testout'){const id0=S.items[0].vid;if(firsts[0]?.ok){const nx=state.order[weekPos().w+1];knowVerse(id0,true);toMsg=`<b>${esc(V(id0).ref)}</b> moved to Keeping fresh. `+(nx?`${esc(V(nx).ref)} is this week’s verse now.`:'That was the last starter verse.')}else toMsg=`Not quite yet. Stay with ${esc(V(id0).ref)} this week. The daily lessons will get you there.`}
+  save();const mins=Math.max(1,Math.round((Date.now()-S.t0)/60000));
+  S.state='done';$('#sBar').style.width='100%';$('#sCount').textContent='';foot.className='s-foot';fb.hidden=true;btn.textContent='Back to home';btn.disabled=false;
+  body.innerHTML=`<div class="s-inner finish"><div class="seal">${IC.check}</div><h2>${S.mode==='daily'?'Lesson complete':S.mode==='testout'?(firsts[0]?.ok?'You know this one':'Almost there'):'Extra practice done'}</h2>
+   <p class="sub">${S.mode==='daily'?'Come back tomorrow for the next lesson, or keep going now.':S.mode==='testout'?toMsg:'This extra round doesn’t change your schedule.'}</p>
+   ${S.mode==='daily'&&nextLabel()?`<button class="btn" id="fNext">${IC.play}<span>${esc(nextLabel())}</span></button>`:''}
+   <div class="stats"><div class="stat"><b>+${S.xp}</b><span>points</span></div><div class="stat"><b>${right}/${firsts.length}</b><span>right first try</span></div><div class="stat"><b>${mins}</b><span>${mins===1?'minute':'minutes'}</span></div></div>
+   ${revNote?`<div class="list" style="width:100%;text-align:left"><h3>Callbacks</h3>${revNote}</div>`:''}</div>`;
+  const fN=$('#fNext');fN&&fN.addEventListener('click',()=>{closeSession();nextLesson();startSession(dailyItems(),'daily')})}
+function closeSession(){stopAll();S=null;$('#session').hidden=true;document.body.style.overflow='';render()}
+btn.addEventListener('click',()=>{if(!S)return;if(S.state==='done'){closeSession();return}onCheck()});
+$('#sClose').addEventListener('click',()=>{if(!S)return;if(S.state==='done'){closeSession();return}$('#sLeave').hidden=false});
+$('#sLeaveNo').addEventListener('click',()=>$('#sLeave').hidden=true);
+$('#sLeaveYes').addEventListener('click',closeSession);
+document.addEventListener('keydown',e=>{if(!S||e.key!=='Enter'||e.target===btn)return;if(e.target.tagName==='TEXTAREA'||e.target.classList?.contains('blank-in'))return;
+  if(S.state==='feedback'||S.state==='done'||(S.cur.noGrade&&e.target.tagName!=='BUTTON')){e.preventDefault();btn.click()}});
+
+/* ---------- Sing-along ---------- */
+const ROUNDS=['All the words','Some words hidden','First letters only','From memory'];
+const TIPS=['Sing along out loud. Each round hides more of the words.','Hidden words appear as the tune reaches them. Try to sing them before they show.','Only first letters now. Let the tune carry you.','No words on screen. Sing it from memory; each word appears as you reach it.'];
+let G=null;
+function openSing(id){stopAll();G={v:V(id),round:0,playing:false,echo:false,finished:false};$('#sing').hidden=false;document.body.style.overflow='hidden';drawSing();$('#gPlay').focus({preventScroll:true})}
+function closeSing(){if(G)G.playing=false;stopAll();G=null;$('#sing').hidden=true;document.body.style.overflow='';render()}
+function sylHTML(w,i,SI){return esc(w.pre)+SI[i].parts.map((pt,k)=>`<span class="sy" data-s="${SI[i].s0+k}">${esc(pt)}</span>`+(k<SI[i].parts.length-1&&!pt.endsWith('-')?'<span class="hy">-</span>':'')).join('')+esc(w.post)}
+function drawSing(){const v=G.v,W=words(v),SI=sylInfo(v),r=rng('sing:'+v.id);
+  const cand=W.map((w,i)=>i).filter(i=>isContent(W[i])),hide=new Set(pick(cand,Math.ceil(cand.length*0.5),r));
+  const mode=i=>G.round===0?0:G.round===1?(hide.has(i)?2:0):G.round===2?1:2;
+  let html='',ci=-1;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</div>';html+=`<div class="lline" data-c="${w.ci}">`;ci=w.ci}
+    const m=mode(i);html+=`<span class="gw" data-w="${i}" data-m="${m}">`+(m===0?sylHTML(w,i,SI):m===1?`${esc(w.pre)}<span class="fl">${esc(w.core[0])}</span><span class="hid">${esc(w.core.slice(1))}</span>${esc(w.post)}`:`${esc(w.pre)}<span class="hid">${esc(w.core)}</span>${esc(w.post)}`)+'</span> '});
+  const L=$('#gLyrics');L.innerHTML=html+'</div>';L.classList.add('idle');
+  $('#gRef').textContent=v.ref+' · Sing along';$('#gRound').textContent=`Round ${G.round+1} of 4: ${ROUNDS[G.round]}`;$('#gTip').textContent=TIPS[G.round];
+  $('#gDots').innerHTML=ROUNDS.map((n,k)=>`<button data-ground="${k}" aria-pressed="${k===G.round}">${k+1}. ${n}</button>`).join('');
+  drawSingCtrl()}
+function drawSingCtrl(){const p=$('#gPlay'),n=$('#gNext');
+  p.innerHTML=G.playing?IC.stop+'<span>Stop</span>':IC.note+`<span>${G.finished?'Sing this round again':'Sing'}</span>`;
+  const last=G.round===3;n.innerHTML=last?'Start over at round 1':'Next round';n.className='btn'+(G.finished&&!G.playing?' primary':'');
+  $('#gEcho').setAttribute('aria-pressed',String(G.echo));$('#gEcho').classList.toggle('on',G.echo);
+  $$('[data-gspeed]').forEach(b=>b.setAttribute('aria-pressed',String(state.settings.tempo===b.dataset.gspeed)))}
+function singNote(n){if(!G)return;const L=$('#gLyrics'),v=G.v,W=words(v),el=$(`.gw[data-w="${n.w}"]`,L);
+  if(el&&el.dataset.m!=='0'){el.dataset.m='0';el.innerHTML=sylHTML(W[n.w],n.w,sylInfo(v));el.classList.add('rev')}
+  $$('.sy.lit',L).forEach(x=>x.classList.remove('lit'));const sy=$(`.sy[data-s="${n.s}"]`,L);sy&&sy.classList.add('lit');singLine(W[n.w].ci)}
+function singLine(c){const L=$('#gLyrics');L.classList.remove('idle');$$('.lline',L).forEach(l=>{const on=+l.dataset.c===c;if(on&&!l.classList.contains('cur')){l.classList.add('cur');l.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}else if(!on)l.classList.remove('cur')})}
+function singDone(){G.playing=false;G.finished=true;$$('#gLyrics .sy.lit').forEach(x=>x.classList.remove('lit'));$('#gLyrics').classList.add('idle');drawSingCtrl();
+  if(G.round===3)toast('You sang it from memory.');}
+function singPlay(){if(!G)return;if(G.playing){G.playing=false;stopAll();drawSing();return}
+  drawSing();G.playing=true;G.finished=false;drawSingCtrl();const v=G.v;
+  if(G.echo&&TTS){let c=0;const step=()=>{if(!G||!G.playing)return;if(c>=v.chunks.length){singDone();return}singLine(c);
+      TTS.speak(v.chunks[c].replace(/[“”]/g,'')).then(()=>{if(!G||!G.playing)return;playTune(v,{chunk:c,onNote:singNote,onEnd:()=>{if(!G||!G.playing)return;c++;setTimeout(step,350)}})}).catch(()=>{if(G&&G.playing){G.playing=false;drawSingCtrl()}})};step()}
+  else if(!playTune(v,{onNote:singNote,onEnd:()=>{if(G&&G.playing)singDone()}})){G.playing=false;drawSingCtrl();toast('Sound isn’t available in this browser.')}}
+$('#gPlay').addEventListener('click',singPlay);
+$('#gNext').addEventListener('click',()=>{if(!G)return;G.playing=false;stopAll();G.round=(G.round+1)%4;G.finished=false;drawSing()});
+$('#gClose').addEventListener('click',closeSing);
+$('#gEcho').addEventListener('click',()=>{if(!G)return;G.echo=!G.echo;if(G.playing){G.playing=false;stopAll();drawSing()}else drawSingCtrl()});
+$('#sing').addEventListener('click',e=>{const b=e.target.closest('[data-ground],[data-gspeed]');if(!b||!G)return;
+  if(b.dataset.ground){G.playing=false;stopAll();G.round=+b.dataset.ground;G.finished=false;drawSing()}
+  else{state.settings.tempo=b.dataset.gspeed;save();if(G.playing){G.playing=false;stopAll();drawSing()}else drawSingCtrl()}});
+document.addEventListener('keydown',e=>{if(G&&e.key==='Escape')closeSing()});
+
+/* ---------- Skipping ahead ---------- */
+function nextLabel(){const{w,day}=weekPos();if(w>=state.order.length)return null;if(day<6)return `Continue to day ${day+2}`;const n=state.order[w+1];return n?`Start next verse: ${V(n).ref}`:null}
+function nextLesson(){state.start=addDays(state.start,-1);save()}
+function knowVerse(id,tested){const t=today(),{day}=weekPos();state.srs[id]=tested?{box:5,due:addDays(t,14),last:t}:{box:3,due:addDays(t,4),last:t};state.start=addDays(state.start,-(7-day));save()}
+
+/* ---------- Views ---------- */
+let TAB='today';
+function render(){stopTune();applySettings();syncLearned();
+  $('#pStreak').innerHTML=IC.flame+streak();$('#pXp').innerHTML=IC.star+totalXp();
+  $$('nav.tabs button').forEach(b=>b.toggleAttribute('aria-current',b.dataset.tab===TAB));$$('nav.tabs button').forEach(b=>{if(b.dataset.tab===TAB)b.setAttribute('aria-current','page')});
+  $('#view').innerHTML=TAB==='today'?homeHTML():TAB==='verses'?versesHTML():settingsHTML();window.scrollTo(0,0)}
+
+function homeHTML(){const t=today(),{w,day}=weekPos(),wv=weekVerse(),practiced=state.log[t]?.done,done=wv?(state.weekDays[wv.id]||[]).includes(day):practiced,items=dailyItems(),nl=nextLabel();
+  const hr=new Date().getHours(),greet=hr<12?'Good morning, Shane':hr<18?'Good afternoon, Shane':'Good evening, Shane';
+  const wStart=addDays(state.start,w*7),dd=wv?(state.weekDays[wv.id]||[]):[];
+  const revCount=items.filter(x=>x.review).length,mins=Math.max(2,Math.round(items.length*0.65));
+  const learned=learnedIds();
+  return `<section class="hello"><p class="eyebrow">${esc(niceDate(t))} · Week ${w+1}${wv?`, day ${day+1} of 7`:''}</p><h1>${greet}</h1></section>
+  ${wv?`<article class="card" id="homeVerse"><div class="vc-head"><span class="chip">This week’s verse</span><span class="tag">${esc(wv.tag)}</span></div>
+    <h2 class="ref">${esc(wv.ref)}</h2>
+    <div class="veil ${day>=3&&!done?'on':''}">${verseHTML(wv)}<button class="btn unveil" data-unveil>${IC.eye}<span>Try to recall it, then show</span></button></div>
+    <div class="row"><button class="btn needs-music" data-tune="${wv.id}">${IC.note}<span>Play the tune</span></button><button class="btn needs-music" data-sing="${wv.id}">${IC.mic}<span>Sing along</span></button><button class="btn needs-tts" data-say="${wv.id}">${IC.speak}<span>Read it to me</span></button></div>
+    <div class="week" aria-label="This week">${[0,1,2,3,4,5,6].map(i=>`<div class="day ${dd.includes(i)?'done':''} ${i===day?'today':''}"><i>${dd.includes(i)?IC.check:i+1}</i>${pd(addDays(wStart,i)).toLocaleDateString(undefined,{weekday:'short'})}</div>`).join('')}</div>
+   </article>`:`<article class="card"><span class="chip gold">All starter verses learned</span><h2 class="ref">Keep them fresh</h2><p>You’ve worked through all ${VERSES.length} weekly verses. Daily practice now focuses on callbacks so they stay with you.</p></article>`}
+  <div class="start">${done?`<div class="done-box">${IC.check}<div><b>${wv?`Day ${day+1} lesson done`:'Done for today'}</b><span class="note">${practiced?'Your streak is safe. ':''}The next lesson unlocks tomorrow, or you can keep going now.</span></div></div>${nl?`<button class="btn primary big" data-adv="go">${IC.play}<span>${esc(nl)}</span></button>`:''}<button class="btn" data-go="daily">Practice this lesson again</button>`
+    :`<button class="btn primary big" data-go="daily">${IC.play}<span>Start ${wv?`day ${day+1} lesson`:'today’s practice'}</span></button><p class="meta">About ${mins} minutes · ${items.length} exercises${revCount?` · ${revCount} callback${revCount>1?'s':''}`:''}</p>`}
+   ${wv?`<div class="row" style="justify-content:center">${done?'':'<button class="btn small quiet" data-adv="skip">Skip to next lesson</button>'}<button class="btn small quiet" data-know>I know this verse well</button></div><div id="knowPanel"></div>`:''}</div>
+  <section class="list"><div class="section-h"><h3>Keeping fresh</h3><span class="note">${learned.length} learned</span></div>
+   ${learned.length?learned.map(id=>{const s=state.srs[id];return `<div class="item"><span class="t">${esc(V(id).ref)}</span>${strengthHTML(id)}<span class="s">${state.retired[id]?'Reviews paused':s.due<=t?'Callback due':'Next callback '+(s.due===addDays(t,1)?'tomorrow':niceDate(s.due))}</span></div>`}).join('')
+     :`<p class="empty">Verses you finish move here. Each one comes back in your daily practice, a little less often as it gets stronger.</p>`}</section>
+  <p class="howto">Each day brings a new set of exercises for the week’s verse, getting harder as the week goes on, plus quick callbacks to verses you’ve already learned.</p>`}
+
+function versesHTML(){const{w}=weekPos(),learned=learnedIds(),wv=weekVerse();
+  return `<section class="hello"><p class="eyebrow">World English Bible</p><h1>Your verses</h1></section>
+  <p class="note">One new passage each week. Verses you’ve learned never drop out of practice. They come back less often as they get stronger, up to about every three months. Use Stop reviewing if you no longer want to see one.</p>
+  <div class="list">${state.order.map((id,i)=>{const v=V(id),isCur=wv&&wv.id===id,isL=learned.includes(id);
+    const chip=isCur?'<span class="chip">This week</span>':isL?(state.retired[id]?'<span class="chip muted">Reviews paused</span>':'<span class="chip gold">Keeping fresh</span>'):`<span class="chip muted">Week ${i+1}</span>`;
+    return `<div class="item"><span class="t">${esc(v.ref)}</span>${chip}<span class="s">${esc(v.chunks[0].replace(/[“”]/g,''))} …</span>${isL?strengthHTML(id):''}
+     <div class="acts"><button class="btn small needs-music" data-tune-solo="${id}">${IC.note}<span>Tune</span></button><button class="btn small needs-music" data-sing="${id}">${IC.mic}<span>Sing along</span></button><button class="btn small" data-extra="${id}">${isL||isCur?'Practice':'Preview'}</button>${isL?`<button class="btn small quiet" data-retire="${id}">${state.retired[id]?'Resume reviews':'Stop reviewing'}</button>`:''}${!isL&&!isCur&&wv?`<button class="btn small quiet" data-swap="${id}">Make this week’s verse</button>`:''}</div></div>`}).join('')}</div>`}
+
+function settingsHTML(){const st=state.settings,{w,day}=weekPos();
+  const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-set="${key}" data-val="${v}" aria-pressed="${String(st[key])===String(v)}">${l}</button>`).join('')}</div>`;
+  return `<section class="hello"><h1>Settings</h1></section>
+  <div class="card set"><label class="h">Text size</label>${seg('size',[['standard','Standard'],['large','Large'],['xl','Extra large']])}</div>
+  <div class="card set"><label class="h">Melodies</label>${seg('music',[['true','On'],['false','Off']])}<label class="h">Play the tune automatically when a lesson starts</label>${seg('autoplay',[['false','Off'],['true','On']])}<label class="h">Melody speed</label>${seg('tempo',[['slow','Slow'],['normal','Normal']])}<p class="note">Each passage has its own short tune, with one note per syllable so you can sing the words. Phrases share a repeating pattern so the melody is easy to pick up. Try Sing along on any verse.</p></div>
+  <div class="card set"><label class="h">Prototype tools</label><p class="note">Simulated today: <b>${esc(niceDate(today()))}</b> (week ${w+1}, day ${day+1}). Use these to preview how the weeks and callbacks unfold.</p>
+   <div class="row"><button class="btn small" data-dev="day">Skip ahead a day</button><button class="btn small" data-dev="week">Skip to next week</button><button class="btn small" data-dev="real">Back to real date</button></div>
+   <div class="row"><button class="btn small danger" data-dev="reset">Reset all progress</button></div><div id="resetConfirm"></div>
+   <p class="note">Progress is saved in this browser on this device.</p></div>
+  <p class="note">Scripture quotations are from the World English Bible, which is in the public domain.</p>`}
+
+document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el||S)return;const d=el.dataset;
+  if(d.tab){TAB=d.tab;render();return}
+  if(G)return;
+  if(d.sing){openSing(d.sing);return}
+  if(d.go==='daily'){startSession(dailyItems(),'daily');return}
+  if(d.adv){nextLesson();if(d.adv==='go')startSession(dailyItems(),'daily');else{render();toast('Skipped to the next lesson.')}return}
+  if(d.know!==undefined){const wv=weekVerse();$('#knowPanel').innerHTML=`<div class="card"><p><b>Already know ${esc(wv.ref)}?</b> Say or type it once from memory. Get about 80% of the words and it moves to Keeping fresh, and the next verse starts today.</p><div class="row"><button class="btn primary" data-testout="${wv.id}">Test me (about 1 minute)</button><button class="btn" data-knowskip="${wv.id}">Skip without a test</button><button class="btn" data-knowretire="${wv.id}">Skip and don’t review it</button><button class="btn quiet" data-knowcancel>Cancel</button></div><p class="note">If you skip the test, the verse still comes back as a callback in a few days to make sure it stuck. Choose “don’t review it” to leave it out of callbacks; you can turn reviews back on from the Verses tab.</p></div>`;return}
+  if(d.testout){startSession([{kind:'recite',p:false,vid:d.testout,seed:hash(String(Date.now())),key:'t0',testout:true}],'testout');return}
+  if(d.knowskip){const nx=state.order[weekPos().w+1];knowVerse(d.knowskip,false);render();toast(nx?`${V(nx).ref} is now this week’s verse.`:'All starter verses learned.');return}
+  if(d.retire){const id=d.retire;if(state.retired[id]){delete state.retired[id];state.srs[id].due=today();toast(`${V(id).ref} is back in your callbacks.`)}else{state.retired[id]=true;toast(`${V(id).ref} won’t come up in callbacks. You can resume it anytime.`)}save();render();return}
+  if(d.knowretire){const nx=state.order[weekPos().w+1];knowVerse(d.knowretire,false);state.retired[d.knowretire]=true;save();render();toast(nx?`Skipped. ${V(nx).ref} is now this week’s verse.`:'Skipped.');return}
+  if(d.knowcancel!==undefined){$('#knowPanel').innerHTML='';return}
+  if(d.unveil!==undefined){el.closest('.veil').classList.remove('on');return}
+  if(d.tune){karaoke(el,V(d.tune),$('#homeVerse'));return}
+  if(d.say){speak(fullText(V(d.say)));return}
+  if(d.tuneSolo){const was=el.classList.contains('on');stopTune();if(!was){if(playTune(V(d.tuneSolo),{onEnd:()=>{el.classList.remove('on');el.innerHTML=IC.note+'<span>Tune</span>'}})){el.classList.add('on');el.innerHTML=IC.stop+'<span>Stop</span>'}}return}
+  if(d.extra){startSession(extraItems(d.extra),'extra');return}
+  if(d.swap){const{w}=weekPos(),i=state.order.indexOf(d.swap);[state.order[w],state.order[i]]=[state.order[i],state.order[w]];save();TAB='today';render();toast(`${V(d.swap).ref} is now this week’s verse.`);return}
+  if(d.set){let v=d.val;if(v==='true')v=true;if(v==='false')v=false;state.settings[d.set]=v;save();render();return}
+  if(d.dev==='day'){state.offset++;save();render();toast('Moved ahead one day.');return}
+  if(d.dev==='week'){const{day}=weekPos();state.offset+=7-day;save();render();toast('Moved to the start of next week.');return}
+  if(d.dev==='real'){state.offset=0;save();render();return}
+  if(d.dev==='reset'){$('#resetConfirm').innerHTML='<div class="confirm"><span>Erase all progress and start over at week 1?</span><button class="btn small danger" data-dev="reset-yes">Erase</button><button class="btn small" data-dev="reset-no">Cancel</button></div>';return}
+  if(d.dev==='reset-yes'){state=fresh();save();render();toast('Progress reset.');return}
+  if(d.dev==='reset-no'){$('#resetConfirm').innerHTML='';return}
+});
+
+applySettings();render();initCaps();
+</script>
+
+<script>
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
