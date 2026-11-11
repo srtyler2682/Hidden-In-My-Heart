@@ -303,7 +303,7 @@ html,body{overscroll-behavior-y:none}
   </div></div>
   <div class="s-foot"><div class="in">
     <div class="row g-ctrl"><button class="btn primary big" id="gPlay"></button><button class="btn" id="gNext"></button></div>
-    <div class="g-opts"><button class="btn small needs-tts" id="gEcho" aria-pressed="false">Read each line first</button><span class="seg"><button data-gspeed="slow">Slow</button><button data-gspeed="normal">Normal</button></span></div>
+    <div class="g-opts"><button class="btn small needs-tts" id="gEcho" aria-pressed="false">Read each line first</button><span class="seg"><button data-gspeed="slow">Slow</button><button data-gspeed="normal">Normal</button><button data-gspeed="fast">Fast</button></span></div>
   </div></div>
 </div>
 <script>
@@ -470,7 +470,7 @@ function pad(ctx,out,midi,s,d){[0,7,12].forEach((iv,k)=>{const o=ctx.createOscil
   g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.12);g.gain.setValueAtTime(vol,s+Math.max(0.13,d-0.2));g.gain.exponentialRampToValueAtTime(0.0001,s+d+0.4);
   o.connect(g);g.connect(out);o.start(s);o.stop(s+d+0.5)})}
 function playTune(v,{chunk=null,onWord=null,onNote=null,onEnd=null}={}){stopTune();const ctx=ac();if(!ctx)return false;
-  const tn=tune(v),beat=state.settings.tempo==='slow'?0.62:0.44;let notes=tn.notes,lines=tn.lines,off=0,end=tn.total;
+  const tn=tune(v),beat={slow:0.62,normal:0.44,fast:0.32}[state.settings.tempo]||0.44;let notes=tn.notes,lines=tn.lines,off=0,end=tn.total;
   if(chunk!=null){const L=tn.lines[chunk];notes=notes.filter(n=>n.t>=L.t0&&n.t<L.t1);lines=[L];off=L.t0;end=L.t1}
   const master=ctx.createGain();master.gain.value=0.9;master.connect(ctx.destination);
   const T=ctx.currentTime+0.08,timers=[];
@@ -900,7 +900,7 @@ function settingsHTML(){const st=state.settings,{w,day}=weekPos();
    <p class="note">Last backup: <b>${state.lastBackup?esc(niceDate(state.lastBackup)):'never'}</b></p>
    <div class="row"><button class="btn small" data-backup>${IC.save}<span>Save a backup</span></button><button class="btn small" data-restore>Restore from a backup</button></div><div id="restoreConfirm"></div></div>
   <div class="card set"><label class="h">Text size</label>${seg('size',[['standard','Standard'],['large','Large'],['xl','Extra large']])}</div>
-  <div class="card set"><label class="h">Melodies</label>${seg('music',[['true','On'],['false','Off']])}<label class="h">Play the tune automatically when a lesson starts</label>${seg('autoplay',[['false','Off'],['true','On']])}<label class="h">Melody speed</label>${seg('tempo',[['slow','Slow'],['normal','Normal']])}<p class="note">Each passage has its own short tune, with one note per syllable so you can sing the words. Phrases share a repeating pattern so the melody is easy to pick up. Try Sing along on any verse.</p></div>
+  <div class="card set"><label class="h">Melodies</label>${seg('music',[['true','On'],['false','Off']])}<label class="h">Play the tune automatically when a lesson starts</label>${seg('autoplay',[['false','Off'],['true','On']])}<label class="h">Melody speed</label>${seg('tempo',[['slow','Slow'],['normal','Normal'],['fast','Fast']])}<p class="note">Each passage has its own short tune, with one note per syllable so you can sing the words. Phrases share a repeating pattern so the melody is easy to pick up. Try Sing along on any verse.</p></div>
   <div class="card set"><label class="h">Prototype tools</label><p class="note">Simulated today: <b>${esc(niceDate(today()))}</b> (week ${w+1}, day ${day+1}). Use these to preview how the weeks and callbacks unfold.</p>
    <div class="row"><button class="btn small" data-dev="day">Skip ahead a day</button><button class="btn small" data-dev="week">Skip to next week</button><button class="btn small" data-dev="real">Back to real date</button></div>
    <div class="row"><button class="btn small danger" data-dev="reset">Reset all progress</button></div><div id="resetConfirm"></div>
