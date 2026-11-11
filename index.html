@@ -244,6 +244,13 @@ textarea.recite:focus{border-color:var(--accent);outline:none}
 .vc-r .btn.small{min-height:36px;padding:4px 10px}
 #editSheet{position:fixed;inset:0;z-index:46;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 #editSheet textarea{min-height:220px}
+.wtap{font:inherit;color:inherit;background:none;border:0;border-bottom:2px dotted var(--line);border-radius:5px;padding:0 2px;margin:0;cursor:pointer;line-height:1.4}
+.wtap:hover{border-bottom-color:var(--accent)}
+.wtap.sel{background:var(--accent-soft);border-bottom:2px solid var(--accent)}
+.wtap.right{background:var(--good-soft);border-bottom:2px solid var(--good)}
+.wtap.wrong{background:var(--bad-soft);border-bottom:2px solid var(--bad)}
+.wtap.missed{background:var(--gold-soft);border-bottom:2px solid var(--gold)}
+.ex-b{display:flex;flex-direction:column;gap:14px}
 .mine{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.03em}
 </style>
 
@@ -521,18 +528,28 @@ function applySettings(){applyTheme();const sz={standard:'16px',large:'18px',xl:
 const niceDate=s=>pd(s).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 
 /* ---------- Session plans ---------- */
-const PLAN=[
- [['listen'],['bank',2],['order'],['bank',3]],
- [['listen'],['order'],['bank',4],['type',1]],
- [['listen'],['bank',5],['first',0.5],['type',2]],
- [['order'],['first',1],['type',3]],
- [['listen'],['first',1],['recite',true]],
- [['order'],['type',5],['recite',true]],
- [['first',0.5],['recite',false]]
-];
-function reviewItem(id,seed){const b=state.srs[id]?.box||1;const k=[null,['bank',3],['order'],['type',3],['ref'],['first',1],['recite',false]][Math.min(b,6)];return{kind:k[0],p:k[1],vid:id,review:true,seed}}
+/* Lesson plans: each day has "slots" at a set difficulty, and each slot draws from a pool of
+   exercises at that level. The pick changes per verse and per day, and a day never opens with the
+   same kind of exercise as the day before. Difficulty still climbs through the week. */
+const POOL={
+  L:[['listen']],
+  A:[['bank',2],['bank',3],['order'],['next']],
+  BL:[['bank',3],['fix'],['type',1],['next']],
+  B:[['bank',4],['bank',5],['type',1],['type',2],['fix'],['first',0.5],['next']],
+  CL:[['first',0.5],['type',2],['fix']],
+  C:[['type',3],['type',4],['first',1],['fix'],['first',0.5]],
+  C2:[['type',5],['first',1],['type',4]],
+  R:[['recite',true]],F:[['recite',false]]};
+const DAYS=[['L','A','A','A','BL'],['A','A','B','B','B'],['A','B','B','CL'],['B','B','C','C'],['B','C','C','R'],['C','C','C2','R'],['C','C2','F']];
+const PLANC={};
+function dayPlan(vid,day){const key=vid+':'+day;if(PLANC[key])return PLANC[key];const r=rng('plan:'+key),used=new Set(),out=[];
+  const prevOpen=day>0?dayPlan(vid,day-1)[0][0]:null;
+  DAYS[day].forEach((slot,si)=>{const opts=shuffle(POOL[slot],r);let pk=opts.find(o=>!used.has(o[0])&&!(si===0&&o[0]===prevOpen))||opts.find(o=>!used.has(o[0]))||opts[0];used.add(pk[0]);out.push(pk)});
+  return PLANC[key]=out}
+const RPOOL=[null,[['bank',3],['next'],['order']],[['order'],['fix'],['bank',4]],[['type',3],['fix'],['first',0.5]],[['ref'],['first',1],['type',4]],[['first',1],['type',5],['recite',true]],[['recite',false],['first',1],['recite',false]]];
+function reviewItem(id,seed){const b=Math.min(state.srs[id]?.box||1,6),o=RPOOL[b],k=o[seed%o.length];return{kind:k[0],p:k[1],vid:id,review:true,seed}}
 function dailyItems(){const t=today(),{day}=weekPos(),wv=weekVerse();const learn=[];
-  if(wv)PLAN[day].forEach((p,i)=>learn.push({kind:p[0],p:p[1],vid:wv.id,seed:hash(t+wv.id+i),week:day===6&&p[0]==='recite'}));
+  if(wv)dayPlan(wv.id,day).forEach((p,i)=>learn.push({kind:p[0],p:p[1],vid:wv.id,seed:hash(t+wv.id+i),week:day===6&&p[0]==='recite'}));
   const revs=dueReviews(wv?2:5).map((id,i)=>reviewItem(id,hash(t+id+'r'+i)));
   const out=learn.slice();
   if(revs[0])out.splice(Math.min(2,out.length),0,revs[0]);
@@ -541,7 +558,8 @@ function dailyItems(){const t=today(),{day}=weekPos(),wv=weekVerse();const learn
   if(!wv&&!out.length&&revs.length)return revs;
   return out.map((x,i)=>({...x,key:'k'+i}))}
 function extraItems(id){const learned=learnedIds().includes(id)||weekVerse()?.id===id;const seed=hash(Date.now()+id);
-  const p=learned?[['order'],['first',1],['recite',true]]:[['listen'],['bank',2],['order']];
+  const r=rng(seed),one=a=>a[Math.floor(r()*a.length)];
+  const p=learned?[one([['order'],['next'],['fix']]),one([['first',1],['type',4]]),['recite',true]]:[['listen'],one([['bank',2],['next']]),['order']];
   return p.map((x,i)=>({kind:x[0],p:x[1],vid:id,seed:seed+i,key:'e'+i}))}
 
 /* ---------- Exercises ---------- */
@@ -651,7 +669,31 @@ function exRef(it){const v=V(it.vid),r=rng(it.seed),kindA=r()<0.5;const others=p
    mount(rt,a){root=rt;api=a;root.addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||S.state!=='answer')return;sel=b.dataset.id;$$('.opt',root).forEach(x=>x.setAttribute('aria-pressed',x===b));api.ready(true)})},
    check(){const ok=sel===v.id;$$('.opt',root).forEach(x=>{if(x.dataset.id===v.id)x.classList.add('right');else if(x.dataset.id===sel)x.classList.add('wrong')});return{ok,ans:`<b>${esc(v.ref)}</b><br>${esc(fullText(v))}`}}}}
 
-function build(it){return({listen:exListen,bank:exBank,order:exOrder,type:exType,first:exFirst,recite:exRecite,ref:exRef})[it.kind](it)}
+function exNext(it){const v=V(it.vid),L=v.chunks.length,r=rng(it.seed+7);if(L<2)return exBank({...it,kind:'bank',p:3});
+  const k=1+Math.floor(r()*(L-1)),right=v.chunks[k];
+  const same=v.chunks.filter((c,i)=>i!==k&&i!==k-1),others=[];VERSES.filter(x=>x.id!==v.id).forEach(x=>x.chunks.forEach(c=>others.push(c)));
+  const seen=new Set([norm(right)]),ds=[];[...pick(same,1,r),...pick(others,4,r)].forEach(c=>{if(ds.length<2&&!seen.has(norm(c))){seen.add(norm(c));ds.push(c)}});
+  const opts=shuffle([right,...ds],r),ctx=v.chunks.slice(Math.max(0,k-2),k);let sel=null,root,api;
+  return{title:'What comes next?',sub:'Pick the phrase that continues the verse.',
+   html:()=>`<div class="quote">${k>2?'… ':''}${ctx.map(esc).join('<br>')}</div><div class="opts">${opts.map((o,j)=>`<button class="opt" data-j="${j}" aria-pressed="false">${esc(o.replace(/[“”]/g,''))}</button>`).join('')}</div>`,
+   mount(rt,a){root=rt;api=a;root.addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||S.state!=='answer')return;sel=+b.dataset.j;$$('.opt',root).forEach(x=>x.setAttribute('aria-pressed',x===b));api.ready(true)})},
+   check(){const ok=sel!=null&&opts[sel]===right;$$('.opt',root).forEach((x,j)=>{if(opts[j]===right)x.classList.add('right');else if(j===sel)x.classList.add('wrong')});
+     return{ok,ans:v.chunks.map((c,i)=>i===k?`<mark>${esc(c)}</mark>`:esc(c)).join('<br>')}}}}
+
+function exFix(it){const v=V(it.vid),W=words(v),r=rng(it.seed+11);const cand=W.map((w,i)=>i).filter(i=>isContent(W[i]));
+  if(cand.length<3)return exBank({...it,kind:'bank',p:2});
+  const i0=pick(cand,1,r)[0],orig=W[i0],cap=/^[A-Z]/.test(orig.core),seen=new Set(W.map(w=>w.n)),pool=[];
+  VERSES.forEach(x=>words(x).forEach(w=>{if(isContent(w)&&!seen.has(w.n)&&/^[A-Z]/.test(w.core)===cap&&Math.abs(w.core.length-orig.core.length)<=2){seen.add(w.n);pool.push(w.core)}}));
+  if(!pool.length)return exBank({...it,kind:'bank',p:2});
+  const sub=pick(pool,1,r)[0];let sel=null,root,api;
+  return{title:'Find the wrong word',sub:'One word has been swapped out. Tap the word that doesn’t belong.',
+   html(){let html='',ci=-1;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}
+     html+=`${esc(w.pre)}<button class="wtap" data-i="${i}">${esc(i===i0?sub:w.core)}</button>${esc(w.post)} `});return `<div class="card"><div class="verse">${html}</span></div></div>`},
+   mount(rt,a){root=rt;api=a;root.addEventListener('click',e=>{const b=e.target.closest('.wtap');if(!b||S.state!=='answer')return;sel=+b.dataset.i;$$('.wtap',root).forEach(x=>x.classList.toggle('sel',x===b));api.ready(true)})},
+   check(){const ok=sel===i0;$$('.wtap',root).forEach(x=>{const i=+x.dataset.i;x.disabled=true;if(i===i0)x.classList.add(ok?'right':'missed');else if(i===sel)x.classList.add('wrong')});
+     return{ok,ans:`“${esc(sub)}” should be “${esc(orig.core)}”.<br>`+answerVerse(v,[i0])}}}}
+
+function build(it){return({listen:exListen,bank:exBank,order:exOrder,type:exType,first:exFirst,recite:exRecite,ref:exRef,next:exNext,fix:exFix})[it.kind](it)}
 
 /* ---------- Session engine ---------- */
 let S=null;const body=$('#sBody'),btn=$('#sCheck'),foot=$('#sFoot'),fb=$('#fb');
