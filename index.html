@@ -714,7 +714,8 @@ function speakUI(label){return `<div class="speak"><button class="btn primary bi
   <input id="sayIn" class="name-in say-in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>`}
 function speakMount(root,api,onText,long){const mb=$('[data-smic]',root),pe=$('.partial',root),inp=$('.say-in',root),lbl=mb.querySelector('span').textContent;let said='';
   const all=()=>(said+' '+inp.value+' '+pe.textContent).trim(),update=()=>onText(all());
-  const sink={long,final(t){said+=t;update()},partial(t){pe.textContent=t;update()},state(on){mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap when you’re done':lbl}};
+  let last='';
+  const sink={long,final(t){said+=t;last='';pe.textContent='';update()},partial(t){if(!t&&last){said+=' '+last}last=t;pe.textContent=t;update()},state(on){if(!on&&last){said+=' '+last;last='';pe.textContent='';update()}mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap when you’re done':lbl}};
   mb.addEventListener('click',()=>{if(S&&S.state==='answer')micToggle(sink)});
   inp.addEventListener('input',update);
   inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();api.ready(!!all());api.submit()}});
@@ -729,18 +730,18 @@ function exSay(it){const v=V(it.vid),W=words(v),r=rng(it.seed+13),cand=W.map((w,
      return `<div class="card"><div class="verse">${html}</span></div></div>`+speakUI('Tap to speak')},
    mount(rt,a){root=rt;api=a;sp=speakMount(root,api,txt=>{const toks=txt.split(/\s+/).filter(Boolean);
      blanks.forEach((bi,k)=>{if(!got.has(k)&&toks.some(t=>close(t,W[bi].core))){got.add(k);const el=$(`.slot[data-k="${k}"]`,root);el.textContent=W[bi].core;el.classList.add('right')}});
-     api.ready(!!txt);if(got.size===blanks.length&&!auto){auto=true;stopListening();setTimeout(()=>api.submit(),700)}},false)},
+     api.ready(!!txt||got.size>0);if(got.size===blanks.length&&!auto){auto=true;api.ready(true);stopListening();setTimeout(()=>{api.ready(true);api.submit()},700)}},false)},
    check(){stopListening();const ok=got.size===blanks.length;$$('.slot',root).forEach((el,k)=>{if(!got.has(k)){el.textContent=W[blanks[k]].core;el.classList.add('wrong')}});return{ok,ans:answerVerse(v,blanks)}}}}
 function exSayLine(it){const v=V(it.vid),L=v.chunks.length,r=rng(it.seed+17),k=Math.floor(r()*L),line=v.chunks[k],fake={id:v.id+'#line'+k+'#'+hash(line),chunks:[line]};let root,api,sp;
   const hint=line.split(' ').map(t=>{const x=splitTok(t);return esc(x.pre)+esc(x.core[0]||'')+`<span class="hid">${esc(x.core.slice(1))}</span>`+esc(x.post)}).join(' ');
   return{title:'Say this line',sub:'Only the first letters are showing. Tap the microphone and say the whole line.',
    html:()=>`<div class="card"><div class="verse">${v.chunks.map((c,i)=>i===k?`<span class="line"><b>${hint}</b></span>`:`<span class="line ctx">${esc(c)}</span>`).join('')}</div></div>`+speakUI('Tap to speak'),
-   mount(rt,a){root=rt;api=a;sp=speakMount(root,api,txt=>api.ready(!!txt),false)},
+   mount(rt,a){root=rt;api=a;let heard=false;sp=speakMount(root,api,txt=>{if(txt)heard=true;api.ready(heard)},false)},
    check(){stopListening();const{score,hit}=diffWords(fake,sp.text()),Wl=words(fake),ok=score>=0.75;
      return{ok,ans:`<b>${Math.round(score*100)}% of the line.</b><br>`+Wl.map((w,i)=>hit.has(i)?esc(w.t):`${esc(w.pre)}<span class="miss">${esc(w.core)}</span>${esc(w.post)}`).join(' ')}}}}
 const SPEAKING={say:it=>({...it,kind:'type',p:it.p||1}),sayline:it=>({...it,kind:'type',p:3})};
-function speakOff(){return state.settings.speaking===false||state.noSpeak===today()}
-function cantSpeak(){stopListening();state.noSpeak=today();save();toast('Speaking exercises are off for the rest of today.');showEx()}
+function speakOff(){return state.settings.speaking===false||!!(S&&S.noSpeak)}
+function cantSpeak(){stopListening();if(S)S.noSpeak=true;toast('No more speaking exercises in this lesson.');showEx()}
 function build(it){return({listen:exListen,bank:exBank,order:exOrder,type:exType,first:exFirst,recite:exRecite,ref:exRef,next:exNext,fix:exFix,say:exSay,sayline:exSayLine})[it.kind](it)}
 
 /* ---------- Session engine ---------- */
@@ -989,7 +990,7 @@ function settingsHTML(){const st=state.settings,{w,day}=weekPos();
   <div class="card set" id="backupCard"><label class="h">Backup</label><p class="note">Your progress saves itself on this device as you go. A backup file is a spare copy for a new phone, or in case the app gets deleted. Once a month is plenty; the app shows a small reminder when it’s time.</p>
    <p class="note">Last backup: <b>${state.lastBackup?esc(niceDate(state.lastBackup)):'never'}</b></p>
    <div class="row"><button class="btn small" data-backup>${IC.save}<span>Save a backup</span></button><button class="btn small" data-restore>Restore from a backup</button></div><div id="restoreConfirm"></div></div>
-  <div class="card set"><label class="h">Speaking exercises</label>${seg('speaking',[['true','On'],['false','Off']])}<p class="note">${speakOff()&&st.speaking!==false?'Off for the rest of today because you tapped Can’t speak now. They’re back tomorrow. ':''}Some exercises ask you to say words out loud. Tap <b>Can’t speak now</b> during one to skip them for the rest of the day; you’ll get a typing exercise instead.</p></div>
+  <div class="card set"><label class="h">Speaking exercises</label>${seg('speaking',[['true','On'],['false','Off']])}<p class="note">Some exercises ask you to say words out loud. Tap <b>Can’t speak now</b> during one to skip speaking for the rest of that lesson; you’ll get typing exercises instead. The next lesson has speaking again.</p></div>
   <div class="card set"><label class="h">Text size</label>${seg('size',[['standard','Standard'],['large','Large'],['xl','Extra large']])}</div>
   <div class="card set"><label class="h">Melodies</label>${seg('music',[['true','On'],['false','Off']])}<label class="h">Play the tune automatically when a lesson starts</label>${seg('autoplay',[['false','Off'],['true','On']])}<label class="h">Melody speed</label>${seg('tempo',[['slow','Slow'],['normal','Normal'],['fast','Fast']])}<p class="note">Each passage has its own short tune, with one note per syllable so you can sing the words. Phrases share a repeating pattern so the melody is easy to pick up. Try Sing along on any verse.</p></div>
   <div class="card set"><label class="h">Prototype tools</label><p class="note">Simulated today: <b>${esc(niceDate(today()))}</b> (week ${w+1}, day ${day+1}). Use these to preview how the weeks and callbacks unfold.</p>
