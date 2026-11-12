@@ -251,6 +251,9 @@ textarea.recite:focus{border-color:var(--accent);outline:none}
 .wtap.wrong{background:var(--bad-soft);border-bottom:2px solid var(--bad)}
 .wtap.missed{background:var(--gold-soft);border-bottom:2px solid var(--gold)}
 .ex-b{display:flex;flex-direction:column;gap:14px}
+.speak{display:flex;flex-direction:column;gap:10px}
+.speak .partial{min-height:1.3em;text-align:center;margin-block:-4px}
+.speak .cant{display:flex;justify-content:center;margin-top:-8px}
 .mine{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.03em}
 </style>
 
@@ -396,7 +399,7 @@ const pd=s=>new Date(s+'T12:00:00');
 const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ymd(d)};
 const diffDays=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
 const KEY='hidden-in-my-heart-v1';
-function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},retired:{},second:[],custom:[],edits:{},settings:{palette:'evergreen',mode:'auto',music:true,autoplay:false,tempo:'normal',size:'large'}}}
+function fresh(){return{start:ymd(new Date()),offset:0,order:VERSES.map(v=>v.id),srs:{},log:{},weekDays:{},weekCheck:{},retired:{},second:[],custom:[],edits:{},settings:{palette:'evergreen',mode:'auto',speaking:true,music:true,autoplay:false,tempo:'normal',size:'large'}}}
 /* Your own verses live in progress data; this keeps the verse list in step with it. */
 function syncCustom(list){for(let i=VERSES.length-1;i>=0;i--)if(VERSES[i].custom)VERSES.splice(i,1);(Array.isArray(list)?list:[]).forEach(c=>{if(c&&c.id&&c.ref&&Array.isArray(c.chunks)&&c.chunks.length)VERSES.push({...c,custom:true})})}
 function normalize(st){if(!st||typeof st!=='object'||!st.start){syncCustom([]);return fresh()}
@@ -494,25 +497,37 @@ function karaoke(btn,v,root){ // toggles play/stop on a button, lighting words i
   if(ok){btn.classList.add('on');btn.innerHTML=IC.stop+'<span>Stop</span>'}}
 
 /* ---------- Claude voice: dictation + read aloud ---------- */
-let DL=null,DICT=null,TTS=null,dictTarget=null,dictPartial=null;
+let DL=null,DICT=null,TTS=null,SINK=null,REC=null;
+/* Voice input: Claude's dictation inside Claude, the phone/browser's own speech recognition elsewhere.
+   Each exercise passes a "sink" that receives the words. */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition||null;
 function deviceVoice(){return{speak(text){return new Promise((res,rej)=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=0.9;u.lang='en-US';u.onend=()=>res();u.onerror=e=>rej({code:e.error||'upstream_error'});speechSynthesis.speak(u)}catch(e){rej({code:'unavailable'})}})},stop(){try{speechSynthesis.cancel()}catch(e){}}}}
 async function initCaps(){
-  if(!(window.claude&&window.claude.use)){if('speechSynthesis' in window){TTS=deviceVoice();document.body.classList.add('has-tts')}return}
+  if(!(window.claude&&window.claude.use)){if('speechSynthesis' in window){TTS=deviceVoice();document.body.classList.add('has-tts')}if(SR)document.body.classList.add('has-dict');return}
   try{DICT=await window.claude.use('dictation')}catch(e){DICT=null}
   try{TTS=await window.claude.use('tts')}catch(e){TTS=null}
   try{DL=await window.claude.use('downloads')}catch(e){DL=null}
   if(DICT){document.body.classList.add('has-dict');
-    DICT.onFinal(({text})=>{if(!dictTarget)return;const cur=dictTarget.value;dictTarget.value=cur?cur+text:text.trimStart();dictTarget.dispatchEvent(new Event('input',{bubbles:true}))});
-    DICT.onPartial(({text})=>{if(dictPartial)dictPartial.textContent=text});
-    DICT.onState(({state:st,reason})=>{$$('.mic').forEach(b=>{const on=st!=='idle';b.classList.toggle('on',on);b.querySelector('span').textContent=on?'Listening… tap to stop':'Say it aloud'});
-      if(st==='idle'){if(dictPartial)dictPartial.textContent='';if(reason==='unavailable'||reason==='not_granted')document.body.classList.remove('has-dict')}})}
+    DICT.onFinal(({text})=>{SINK&&SINK.final(text)});
+    DICT.onPartial(({text})=>{SINK&&SINK.partial(text)});
+    DICT.onState(({state:st,reason})=>{const on=st!=='idle';SINK&&SINK.state(on);if(!on){SINK&&SINK.partial('');if(reason==='unavailable'||reason==='not_granted')document.body.classList.remove('has-dict')}})}
   if(!TTS&&'speechSynthesis' in window)TTS=deviceVoice();
   if(TTS)document.body.classList.add('has-tts')}
-function micClick(ta){if(!DICT)return;if(DICT.active()){DICT.stop().catch(()=>{});return}
-  dictTarget=ta;DICT.start().catch(e=>{const m={not_granted:'Microphone access was declined. You can still type your answer.',dismissed:'Tap the microphone again when you’re ready.',unavailable:'Voice input isn’t available here. You can type instead.',rate_limited:'Voice input is busy. Try again in a moment.',stopped:''}[e.code];
-    if(m!=='')toast(m||'Voice input stopped. You can type instead.');if(e.code==='not_granted'||e.code==='unavailable')document.body.classList.remove('has-dict')})}
+function listening(){return !!(DICT&&DICT.active())||!!REC}
+function stopListening(){try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}try{REC&&REC.stop()}catch(e){}}
+function micError(code){const m={not_granted:'Microphone access is off for this app. You can type instead, or allow the microphone in your phone’s settings.',dismissed:'Tap the microphone again when you’re ready.',unavailable:'Voice input isn’t available here. You can type instead.',rate_limited:'Voice input is busy. Try again in a moment.',no_speech:'I didn’t catch that. Tap the microphone and try again.',network:'Voice input needs an internet connection.',stopped:''}[code];
+  if(m!=='')toast(m||'Voice input stopped. You can type instead.');if(code==='not_granted'||code==='unavailable')document.body.classList.remove('has-dict')}
+function micToggle(sink){if(listening()){stopListening();return}SINK=sink;
+  if(DICT){DICT.start().catch(e=>micError(e.code));return}
+  if(!SR){micError('unavailable');return}
+  let rec;try{rec=new SR()}catch(e){micError('unavailable');return}
+  rec.lang='en-US';rec.interimResults=true;rec.continuous=!!sink.long;rec.maxAlternatives=1;
+  rec.onresult=e=>{let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript}if(SINK!==sink)return;if(fin)sink.final(' '+fin.trim());sink.partial(part)};
+  rec.onerror=e=>micError({'not-allowed':'not_granted','service-not-allowed':'not_granted','audio-capture':'not_granted','no-speech':'no_speech','network':'network','aborted':'stopped'}[e.error]||'upstream_error');
+  rec.onend=()=>{if(REC===rec)REC=null;sink.partial('');sink.state(false)};
+  try{rec.start();REC=rec;sink.state(true)}catch(e){micError('upstream_error')}}
 function speak(text){if(!TTS)return;stopTune();TTS.speak(text.replace(/[“”]/g,'')).catch(()=>{})}
-function stopAll(){stopTune();try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}try{TTS&&TTS.stop()}catch(e){}}
+function stopAll(){stopTune();stopListening();try{TTS&&TTS.stop()}catch(e){}}
 function toast(msg){$$('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;t.setAttribute('role','status');document.body.appendChild(t);setTimeout(()=>t.remove(),3800)}
 
 /* ---------- Shared rendering ---------- */
@@ -534,11 +549,11 @@ const niceDate=s=>pd(s).toLocaleDateString(undefined,{weekday:'long',month:'long
 const POOL={
   L:[['listen']],
   A:[['bank',2],['bank',3],['order'],['next']],
-  BL:[['bank',3],['fix'],['type',1],['next']],
-  B:[['bank',4],['bank',5],['type',1],['type',2],['fix'],['first',0.5],['next']],
+  BL:[['bank',3],['fix'],['type',1],['next'],['say',1]],
+  B:[['bank',4],['bank',5],['type',1],['type',2],['fix'],['first',0.5],['next'],['say',1],['say',2]],
   CL:[['first',0.5],['type',2],['fix']],
-  C:[['type',3],['type',4],['first',1],['fix'],['first',0.5]],
-  C2:[['type',5],['first',1],['type',4]],
+  C:[['type',3],['type',4],['first',1],['fix'],['first',0.5],['sayline']],
+  C2:[['type',5],['first',1],['type',4],['sayline']],
   R:[['recite',true]],F:[['recite',false]]};
 const DAYS=[['L','A','A','A','BL'],['A','A','B','B','B'],['A','B','B','CL'],['B','B','C','C'],['B','C','C','R'],['C','C','C2','R'],['C','C2','F']];
 const PLANC={};
@@ -546,7 +561,7 @@ function dayPlan(vid,day){const key=vid+':'+day;if(PLANC[key])return PLANC[key];
   const prevOpen=day>0?dayPlan(vid,day-1)[0][0]:null;
   DAYS[day].forEach((slot,si)=>{const opts=shuffle(POOL[slot],r);let pk=opts.find(o=>!used.has(o[0])&&!(si===0&&o[0]===prevOpen))||opts.find(o=>!used.has(o[0]))||opts[0];used.add(pk[0]);out.push(pk)});
   return PLANC[key]=out}
-const RPOOL=[null,[['bank',3],['next'],['order']],[['order'],['fix'],['bank',4]],[['type',3],['fix'],['first',0.5]],[['ref'],['first',1],['type',4]],[['first',1],['type',5],['recite',true]],[['recite',false],['first',1],['recite',false]]];
+const RPOOL=[null,[['bank',3],['next'],['order']],[['order'],['fix'],['bank',4],['say',1]],[['type',3],['fix'],['first',0.5],['say',2]],[['ref'],['first',1],['type',4],['sayline']],[['first',1],['type',5],['recite',true],['sayline']],[['recite',false],['first',1],['recite',false]]];
 function reviewItem(id,seed){const b=Math.min(state.srs[id]?.box||1,6),o=RPOOL[b],k=o[seed%o.length];return{kind:k[0],p:k[1],vid:id,review:true,seed}}
 function dailyItems(){const t=today(),{day}=weekPos(),wv=weekVerse();const learn=[];
   if(wv)dayPlan(wv.id,day).forEach((p,i)=>learn.push({kind:p[0],p:p[1],vid:wv.id,seed:hash(t+wv.id+i),week:day===6&&p[0]==='recite'}));
@@ -653,12 +668,12 @@ function exRecite(it){const v=V(it.vid),W=words(v);let root,api;const hints=v.ch
      <p class="partial" aria-live="polite"></p>
      <div class="row"><button class="btn mic needs-dict" data-mic>${IC.mic}<span>Say it aloud</span></button>${it.p?'':`<button class="btn small quiet" data-hints>${IC.eye}<span>Show first letters</span></button>`}${humBtn()}</div>
      <p class="note needs-nodict">Tip: on a phone, your keyboard’s microphone key works here too.</p>`,
-   mount(rt,a){root=rt;api=a;const ta=$('textarea',root);dictPartial=$('.partial',root);
+   mount(rt,a){root=rt;api=a;const ta=$('textarea',root),pe=$('.partial',root),mb=$('[data-mic]',root);const sink={long:true,final(t){ta.value=ta.value?ta.value+t:t.trimStart();ta.dispatchEvent(new Event('input',{bubbles:true}))},partial(t){pe.textContent=t},state(on){if(mb){mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap to stop':'Say it aloud'}}};
      ta.addEventListener('input',()=>api.ready(ta.value.trim().split(/\s+/).length>=Math.min(3,W.length)));
-     root.addEventListener('click',e=>{if(e.target.closest('[data-mic]'))micClick(ta);
+     root.addEventListener('click',e=>{if(e.target.closest('[data-mic]'))micToggle(sink);
        if(e.target.closest('[data-hints]')){$('.hints',root).hidden=false;e.target.closest('[data-hints]').remove()}
        if(e.target.closest('[data-hum]'))karaokeless(v)})},
-   check(){if(DICT&&DICT.active())DICT.stop().catch(()=>{});const{score,hit}=diffWords(v,$('textarea',root).value);const ok=score>=0.8;
+   check(){stopListening();const{score,hit}=diffWords(v,$('textarea',root).value);const ok=score>=0.8;
      return{ok,ans:`<b>${Math.round(score*100)}% of the words.</b><br>`+v.chunks.map((c,ci)=>W.map((w,i)=>w.ci!==ci?null:(hit.has(i)?esc(w.t):`${esc(w.pre)}<span class="miss">${esc(w.core)}</span>${esc(w.post)}`)).filter(x=>x!=null).join(' ')).join('<br>')}}}}
 function karaokeless(v){if(PLAY){stopTune();return}playTune(v)}
 
@@ -693,7 +708,40 @@ function exFix(it){const v=V(it.vid),W=words(v),r=rng(it.seed+11);const cand=W.m
    check(){const ok=sel===i0;$$('.wtap',root).forEach(x=>{const i=+x.dataset.i;x.disabled=true;if(i===i0)x.classList.add(ok?'right':'missed');else if(i===sel)x.classList.add('wrong')});
      return{ok,ans:`“${esc(sub)}” should be “${esc(orig.core)}”.<br>`+answerVerse(v,[i0])}}}}
 
-function build(it){return({listen:exListen,bank:exBank,order:exOrder,type:exType,first:exFirst,recite:exRecite,ref:exRef,next:exNext,fix:exFix})[it.kind](it)}
+function speakUI(label){return `<div class="speak"><button class="btn primary big mic needs-dict" data-smic>${IC.mic}<span>${label}</span></button><p class="partial" aria-live="polite"></p>
+  <div class="cant"><button class="btn small quiet" data-noskip>Can’t speak now</button></div>
+  <label class="note" for="sayIn"><span class="needs-dict">Or type it instead:</span><span class="needs-nodict">Type it, or tap your keyboard’s microphone key and say it:</span></label>
+  <input id="sayIn" class="name-in say-in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>`}
+function speakMount(root,api,onText,long){const mb=$('[data-smic]',root),pe=$('.partial',root),inp=$('.say-in',root),lbl=mb.querySelector('span').textContent;let said='';
+  const all=()=>(said+' '+inp.value+' '+pe.textContent).trim(),update=()=>onText(all());
+  const sink={long,final(t){said+=t;update()},partial(t){pe.textContent=t;update()},state(on){mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap when you’re done':lbl}};
+  mb.addEventListener('click',()=>{if(S&&S.state==='answer')micToggle(sink)});
+  inp.addEventListener('input',update);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();api.ready(!!all());api.submit()}});
+  root.addEventListener('click',e=>{if(e.target.closest('[data-noskip]'))cantSpeak()});
+  return{text:all}}
+const sayable=w=>isContent(w)&&!w.n.startsWith('yahweh');
+function exSay(it){const v=V(it.vid),W=words(v),r=rng(it.seed+13),cand=W.map((w,i)=>i).filter(i=>sayable(W[i]));
+  const blanks=pick(cand,Math.min(it.p||1,cand.length),r).sort((a,b)=>a-b),got=new Set();let root,api,sp,auto=false;
+  return{title:blanks.length>1?'Say the missing words':'Say the missing word',sub:`Tap the microphone and say the missing ${blanks.length>1?'words':'word'}. Saying the whole line works too.`,
+   html(){let html='',ci=-1,k=0;W.forEach((w,i)=>{if(w.ci!==ci){if(ci>=0)html+='</span>';html+='<span class="line">';ci=w.ci}
+     html+=blanks.includes(i)?`${esc(w.pre)}<span class="slot" data-k="${k++}">\u00a0</span>${esc(w.post)} `:`<span class="w">${esc(w.t)}</span> `});
+     return `<div class="card"><div class="verse">${html}</span></div></div>`+speakUI('Tap to speak')},
+   mount(rt,a){root=rt;api=a;sp=speakMount(root,api,txt=>{const toks=txt.split(/\s+/).filter(Boolean);
+     blanks.forEach((bi,k)=>{if(!got.has(k)&&toks.some(t=>close(t,W[bi].core))){got.add(k);const el=$(`.slot[data-k="${k}"]`,root);el.textContent=W[bi].core;el.classList.add('right')}});
+     api.ready(!!txt);if(got.size===blanks.length&&!auto){auto=true;stopListening();setTimeout(()=>api.submit(),700)}},false)},
+   check(){stopListening();const ok=got.size===blanks.length;$$('.slot',root).forEach((el,k)=>{if(!got.has(k)){el.textContent=W[blanks[k]].core;el.classList.add('wrong')}});return{ok,ans:answerVerse(v,blanks)}}}}
+function exSayLine(it){const v=V(it.vid),L=v.chunks.length,r=rng(it.seed+17),k=Math.floor(r()*L),line=v.chunks[k],fake={id:v.id+'#line'+k+'#'+hash(line),chunks:[line]};let root,api,sp;
+  const hint=line.split(' ').map(t=>{const x=splitTok(t);return esc(x.pre)+esc(x.core[0]||'')+`<span class="hid">${esc(x.core.slice(1))}</span>`+esc(x.post)}).join(' ');
+  return{title:'Say this line',sub:'Only the first letters are showing. Tap the microphone and say the whole line.',
+   html:()=>`<div class="card"><div class="verse">${v.chunks.map((c,i)=>i===k?`<span class="line"><b>${hint}</b></span>`:`<span class="line ctx">${esc(c)}</span>`).join('')}</div></div>`+speakUI('Tap to speak'),
+   mount(rt,a){root=rt;api=a;sp=speakMount(root,api,txt=>api.ready(!!txt),false)},
+   check(){stopListening();const{score,hit}=diffWords(fake,sp.text()),Wl=words(fake),ok=score>=0.75;
+     return{ok,ans:`<b>${Math.round(score*100)}% of the line.</b><br>`+Wl.map((w,i)=>hit.has(i)?esc(w.t):`${esc(w.pre)}<span class="miss">${esc(w.core)}</span>${esc(w.post)}`).join(' ')}}}}
+const SPEAKING={say:it=>({...it,kind:'type',p:it.p||1}),sayline:it=>({...it,kind:'type',p:3})};
+function speakOff(){return state.settings.speaking===false||state.noSpeak===today()}
+function cantSpeak(){stopListening();state.noSpeak=today();save();toast('Speaking exercises are off for the rest of today.');showEx()}
+function build(it){return({listen:exListen,bank:exBank,order:exOrder,type:exType,first:exFirst,recite:exRecite,ref:exRef,next:exNext,fix:exFix,say:exSay,sayline:exSayLine})[it.kind](it)}
 
 /* ---------- Session engine ---------- */
 let S=null;const body=$('#sBody'),btn=$('#sCheck'),foot=$('#sFoot'),fb=$('#fb');
@@ -701,7 +749,7 @@ const api={ready(b){if(S&&S.state==='answer')btn.disabled=!b},submit(){if(S&&S.s
 function startSession(items,mode,label){stopAll();if(!items.length){toast('Nothing to practice right now.');return}
   S={items:items.slice(),i:0,mode,label,first:{},xp:0,t0:Date.now(),retried:0};
   $('#session').hidden=false;$('#sLeave').hidden=true;document.body.style.overflow='hidden';showEx()}
-function showEx(){const it=S.items[S.i],v=V(it.vid),ex=build(it);S.cur=ex;S.state='answer';
+function showEx(){if(speakOff()&&SPEAKING[S.items[S.i].kind])S.items[S.i]=SPEAKING[S.items[S.i].kind](S.items[S.i]);const it=S.items[S.i],v=V(it.vid),ex=build(it);S.cur=ex;S.state='answer';
   foot.className='s-foot';fb.hidden=true;fb.innerHTML='';
   body.innerHTML=`<div class="s-inner"><div class="ex-h"><div class="ex-tags">${it.review?'<span class="chip gold">Callback</span>':it.retry?'<span class="chip muted">One more try</span>':it.second?'<span class="chip gold">Also practicing</span>':'<span class="chip">This week</span>'}<span class="r">${esc(v.ref)}</span></div><h2>${esc(ex.title)}</h2><p class="sub">${esc(ex.sub)}</p></div><div class="ex-b"></div></div>`;
   const root=$('.ex-b',body);ex.root=root;root.innerHTML=ex.html();ex.mount(root,api);body.scrollTop=0;
@@ -715,7 +763,7 @@ function onCheck(){if(!S)return;if(S.state==='feedback'){next();return}
   if(res.ok)S.xp+=it.retry?5:10;
   else if(!it.retry&&S.retried<3&&S.mode!=='testout'){S.items.push({...it,retry:true,seed:it.seed+101,key:it.key});S.retried++}
   S.state='feedback';foot.className='s-foot '+(res.ok?'ok':'bad');
-  fb.innerHTML=`<h3>${res.ok?IC.check:IC.x}${res.ok?PRAISE[S.i%PRAISE.length]:'Not quite. Here’s how it goes:'}</h3>${res.ok&&!['first','recite'].includes(it.kind)?'':`<div class="ans">${res.ans}</div>`}${!res.ok&&!it.retry&&S.mode!=='testout'?'<p class="note">You’ll see this one again at the end.</p>':''}`;
+  fb.innerHTML=`<h3>${res.ok?IC.check:IC.x}${res.ok?PRAISE[S.i%PRAISE.length]:'Not quite. Here’s how it goes:'}</h3>${res.ok&&!['first','recite','sayline'].includes(it.kind)?'':`<div class="ans">${res.ans}</div>`}${!res.ok&&!it.retry&&S.mode!=='testout'?'<p class="note">You’ll see this one again at the end.</p>':''}`;
   fb.hidden=false;btn.textContent='Continue';btn.disabled=false;btn.focus({preventScroll:true});
   $('#sBar').style.width=((S.i+1)/S.items.length*100)+'%'}
 function next(){stopAll();S.i++;if(S.i>=S.items.length)finish();else showEx()}
@@ -941,6 +989,7 @@ function settingsHTML(){const st=state.settings,{w,day}=weekPos();
   <div class="card set" id="backupCard"><label class="h">Backup</label><p class="note">Your progress saves itself on this device as you go. A backup file is a spare copy for a new phone, or in case the app gets deleted. Once a month is plenty; the app shows a small reminder when it’s time.</p>
    <p class="note">Last backup: <b>${state.lastBackup?esc(niceDate(state.lastBackup)):'never'}</b></p>
    <div class="row"><button class="btn small" data-backup>${IC.save}<span>Save a backup</span></button><button class="btn small" data-restore>Restore from a backup</button></div><div id="restoreConfirm"></div></div>
+  <div class="card set"><label class="h">Speaking exercises</label>${seg('speaking',[['true','On'],['false','Off']])}<p class="note">${speakOff()&&st.speaking!==false?'Off for the rest of today because you tapped Can’t speak now. They’re back tomorrow. ':''}Some exercises ask you to say words out loud. Tap <b>Can’t speak now</b> during one to skip them for the rest of the day; you’ll get a typing exercise instead.</p></div>
   <div class="card set"><label class="h">Text size</label>${seg('size',[['standard','Standard'],['large','Large'],['xl','Extra large']])}</div>
   <div class="card set"><label class="h">Melodies</label>${seg('music',[['true','On'],['false','Off']])}<label class="h">Play the tune automatically when a lesson starts</label>${seg('autoplay',[['false','Off'],['true','On']])}<label class="h">Melody speed</label>${seg('tempo',[['slow','Slow'],['normal','Normal'],['fast','Fast']])}<p class="note">Each passage has its own short tune, with one note per syllable so you can sing the words. Phrases share a repeating pattern so the melody is easy to pick up. Try Sing along on any verse.</p></div>
   <div class="card set"><label class="h">Prototype tools</label><p class="note">Simulated today: <b>${esc(niceDate(today()))}</b> (week ${w+1}, day ${day+1}). Use these to preview how the weeks and callbacks unfold.</p>
@@ -984,7 +1033,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('button');if(!el
   if(d.nextup){const wv=weekVerse();state.nextUp={id:d.nextup,from:today(),cur:wv?wv.id:null};save();render();toast(`${V(d.nextup).ref} starts tomorrow.`);return}
   if(d.nextupCancel!==undefined){delete state.nextUp;save();render();toast('Okay, no change to your schedule.');return}
   if(d.swap){const{w}=weekPos(),i=state.order.indexOf(d.swap);[state.order[w],state.order[i]]=[state.order[i],state.order[w]];save();TAB='today';render();toast(`${V(d.swap).ref} is now this week’s verse.`);return}
-  if(d.set){let v=d.val;if(v==='true')v=true;if(v==='false')v=false;state.settings[d.set]=v;save();const y=scrollY;render();scrollTo(0,y);return}
+  if(d.set){let v=d.val;if(v==='true')v=true;if(v==='false')v=false;state.settings[d.set]=v;if(d.set==='speaking'&&v)delete state.noSpeak;save();const y=scrollY;render();scrollTo(0,y);return}
   if(d.dev==='day'){state.offset++;save();render();toast('Moved ahead one day.');return}
   if(d.dev==='week'){const{day}=weekPos();state.offset+=7-day;save();render();toast('Moved to the start of next week.');return}
   if(d.dev==='real'){state.offset=0;save();render();return}
