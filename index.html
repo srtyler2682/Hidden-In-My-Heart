@@ -254,6 +254,7 @@ textarea.recite:focus{border-color:var(--accent);outline:none}
 .speak{display:flex;flex-direction:column;gap:10px}
 .speak .partial{min-height:1.3em;text-align:center;margin-block:-4px}
 .speak .cant{display:flex;justify-content:center;margin-top:-8px}
+.fb .typo{margin:0;font-size:.95rem}
 .mine{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.03em}
 </style>
 
@@ -385,7 +386,12 @@ function rng(seed){let a=typeof seed==='number'?seed:hash(String(seed));return()
 function shuffle(a,r){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const pick=(a,n,r)=>shuffle(a,r).slice(0,n);
 function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
-const close=(a,b)=>{a=norm(a);b=norm(b);return a===b||(b.length>=5&&lev(a,b)<=1)};
+/* Spelling tolerance (like Duolingo): capitals and punctuation never matter; one wrong, missing, extra or
+   swapped letter still passes for words of 3+ letters (two for long words of 8+). 2 = exact, 1 = typo, 0 = wrong. */
+function osa(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j}
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){const c=a[i-1]===b[j-1]?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[m][n]}
+function nearN(a,b){if(a===b)return 2;if(!a||b.length<3)return 0;return osa(a,b)<=(b.length>=8?2:1)?1:0}
+const close=(a,b)=>nearN(norm(a),norm(b))>0;
 function splitTok(t){const m=t.match(/^([^A-Za-z0-9]*)(.*?)([^A-Za-z0-9]*)$/);return{pre:m[1],core:m[2],post:m[3]}}
 const VCACHE={},TUNES={},SYL={};
 function V(id){return VERSES.find(v=>v.id===id)}
@@ -514,18 +520,25 @@ async function initCaps(){
   if(!TTS&&'speechSynthesis' in window)TTS=deviceVoice();
   if(TTS)document.body.classList.add('has-tts')}
 function listening(){return !!(DICT&&DICT.active())||!!REC}
-function stopListening(){try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}try{REC&&REC.stop()}catch(e){}}
-function micError(code){const m={not_granted:'Microphone access is off for this app. You can type instead, or allow the microphone in your phone’s settings.',dismissed:'Tap the microphone again when you’re ready.',unavailable:'Voice input isn’t available here. You can type instead.',rate_limited:'Voice input is busy. Try again in a moment.',no_speech:'I didn’t catch that. Tap the microphone and try again.',network:'Voice input needs an internet connection.',stopped:''}[code];
-  if(m!=='')toast(m||'Voice input stopped. You can type instead.');if(code==='not_granted'||code==='unavailable')document.body.classList.remove('has-dict')}
-function micToggle(sink){if(listening()){stopListening();return}SINK=sink;
-  if(DICT){DICT.start().catch(e=>micError(e.code));return}
+/* Ends the phone's recognizer right away and resets the button, without waiting for the phone to confirm
+   (iPhones sometimes never confirm, which used to leave the microphone stuck). */
+function endRec(){if(!REC)return;const r=REC;REC=null;clearTimeout(r._idle);try{r.stop()}catch(e){}setTimeout(()=>{try{r.abort()}catch(e){}},600);const k=r._sink;if(k){k.state(false)}}
+function stopListening(){try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}endRec()}
+function micError(code){const m={not_granted:'The microphone didn’t start. Tap it to try again, or type your answer (your keyboard’s microphone key works too).',dismissed:'Tap the microphone again when you’re ready.',unavailable:'Voice input isn’t available here. You can type instead.',rate_limited:'Voice input is busy. Try again in a moment.',no_speech:'I didn’t catch that. Tap the microphone and try again.',network:'Voice input needs an internet connection.',stopped:''}[code];
+  if(m!=='')toast(m||'The microphone stopped. Tap it to try again, or type your answer.')}
+function micToggle(sink){
+  if(DICT){if(DICT.active()){DICT.stop().catch(()=>{});return}SINK=sink;DICT.start().catch(e=>micError(e.code));return}
+  if(REC){endRec();return}
   if(!SR){micError('unavailable');return}
-  let rec;try{rec=new SR()}catch(e){micError('unavailable');return}
-  rec.lang='en-US';rec.interimResults=true;rec.continuous=!!sink.long;rec.maxAlternatives=1;
-  rec.onresult=e=>{let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript}if(SINK!==sink)return;if(fin)sink.final(' '+fin.trim());sink.partial(part)};
-  rec.onerror=e=>micError({'not-allowed':'not_granted','service-not-allowed':'not_granted','audio-capture':'not_granted','no-speech':'no_speech','network':'network','aborted':'stopped'}[e.error]||'upstream_error');
-  rec.onend=()=>{if(REC===rec)REC=null;sink.partial('');sink.state(false)};
-  try{rec.start();REC=rec;sink.state(true)}catch(e){micError('upstream_error')}}
+  SINK=sink;let rec;try{rec=new SR()}catch(e){micError('unavailable');return}
+  rec._sink=sink;let heard=false;
+  const idle=()=>{clearTimeout(rec._idle);rec._idle=setTimeout(()=>{if(REC===rec)endRec()},heard?5000:9000)};
+  rec.lang='en-US';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
+  rec.onresult=e=>{if(REC!==rec)return;let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript}
+    if(fin||part){heard=true;idle()}if(fin)sink.final(' '+fin.trim());sink.partial(part)};
+  rec.onerror=e=>{if(REC!==rec)return;const c=e.error;endRec();if(c==='aborted'||(c==='no-speech'&&heard))return;micError({'not-allowed':'not_granted','service-not-allowed':'not_granted','audio-capture':'not_granted','no-speech':'no_speech','network':'network'}[c]||'upstream_error')};
+  rec.onend=()=>{if(REC===rec)endRec()};
+  try{rec.start();REC=rec;sink.state(true);idle()}catch(e){REC=null;micError('upstream_error')}}
 function speak(text){if(!TTS)return;stopTune();TTS.speak(text.replace(/[“”]/g,'')).catch(()=>{})}
 function stopAll(){stopTune();stopListening();try{TTS&&TTS.stop()}catch(e){}}
 function toast(msg){$$('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;t.setAttribute('role','status');document.body.appendChild(t);setTimeout(()=>t.remove(),3800)}
@@ -632,7 +645,7 @@ function exType(it){const v=V(it.vid),W=words(v),r=rng(it.seed+3);
      root.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('blank-in')){e.preventDefault();const k=+e.target.dataset.k;if(ins[k+1]&&!ins[k+1].value)ins[k+1].focus();else api.submit()}});
      root.addEventListener('click',e=>{if(e.target.closest('[data-hum]')){const k=Math.max(0,ins.findIndex(x=>!x.value.trim()));playTune(v,{chunk:W[blanks[k]].ci})}});
      setTimeout(()=>ins[0]&&ins[0].focus({preventScroll:true}),60)},
-   check(){let ok=true;$$('.blank-in',root).forEach((x,k)=>{const g=close(x.value,W[blanks[k]].core);x.classList.add(g?'right':'wrong');x.readOnly=true;if(!g)ok=false});return{ok,ans:answerVerse(v,blanks)}}}}
+   check(){let ok=true;const typos=[];$$('.blank-in',root).forEach((x,k)=>{const w=W[blanks[k]],g=nearN(norm(x.value),w.n);x.classList.add(g?'right':'wrong');x.readOnly=true;if(!g)ok=false;else if(g===1)typos.push([x.value.trim(),w.core])});return{ok,ans:answerVerse(v,blanks),typo:typoNote(typos)}}}}
 
 function exFirst(it){const v=V(it.vid),W=words(v);let end=W.length;
   if(it.p<1){const half=Math.ceil(W.length*it.p);end=W.findIndex((w,i)=>i>=half-1&&(i===W.length-1||W[i+1].ci!==w.ci))+1||W.length}
@@ -657,8 +670,8 @@ function exFirst(it){const v=V(it.vid),W=words(v);let end=W.length;
 
 function diffWords(v,said){const T=words(v),A=said.split(/\s+/).map(norm).filter(Boolean);const m=T.length,n=A.length;
   const dp=Array.from({length:m+1},()=>new Uint16Array(n+1));
-  for(let i=m-1;i>=0;i--)for(let j=n-1;j>=0;j--)dp[i][j]=(T[i].n===A[j]||(T[i].n.length>=5&&lev(T[i].n,A[j])<=1))?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
-  const hit=new Set();let i=0,j=0;while(i<m&&j<n){if((T[i].n===A[j]||(T[i].n.length>=5&&lev(T[i].n,A[j])<=1))&&dp[i][j]===dp[i+1][j+1]+1){hit.add(i);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++}
+  for(let i=m-1;i>=0;i--)for(let j=n-1;j>=0;j--)dp[i][j]=nearN(A[j],T[i].n)?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const hit=new Set();let i=0,j=0;while(i<m&&j<n){if(nearN(A[j],T[i].n)&&dp[i][j]===dp[i+1][j+1]+1){hit.add(i);i++;j++}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++}
   return{score:m?hit.size/m:0,hit}}
 function exRecite(it){const v=V(it.vid),W=words(v);let root,api;const hints=v.chunks.map(c=>c.split(' ').map(t=>{const s=splitTok(t);return (s.core[0]||'')+s.post}).join(' ')).join('<br>');
   return{title:it.testout?'Test out: say it from memory':it.week?'Week check: say it from memory':'Say it from memory',sub:'Speak or type the whole passage. Small slips are fine; aim for about 80% of the words.',
@@ -684,6 +697,7 @@ function exRef(it){const v=V(it.vid),r=rng(it.seed),kindA=r()<0.5;const others=p
    mount(rt,a){root=rt;api=a;root.addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||S.state!=='answer')return;sel=b.dataset.id;$$('.opt',root).forEach(x=>x.setAttribute('aria-pressed',x===b));api.ready(true)})},
    check(){const ok=sel===v.id;$$('.opt',root).forEach(x=>{if(x.dataset.id===v.id)x.classList.add('right');else if(x.dataset.id===sel)x.classList.add('wrong')});return{ok,ans:`<b>${esc(v.ref)}</b><br>${esc(fullText(v))}`}}}}
 
+function typoNote(list){if(!list.length)return'';return 'Watch the spelling: '+list.map(([a,b])=>`you typed “${esc(a)}”, it’s <b>${esc(b)}</b>`).join('; ')+'.'}
 function exNext(it){const v=V(it.vid),L=v.chunks.length,r=rng(it.seed+7);if(L<2)return exBank({...it,kind:'bank',p:3});
   const k=1+Math.floor(r()*(L-1)),right=v.chunks[k];
   const same=v.chunks.filter((c,i)=>i!==k&&i!==k-1),others=[];VERSES.filter(x=>x.id!==v.id).forEach(x=>x.chunks.forEach(c=>others.push(c)));
@@ -764,7 +778,7 @@ function onCheck(){if(!S)return;if(S.state==='feedback'){next();return}
   if(res.ok)S.xp+=it.retry?5:10;
   else if(!it.retry&&S.retried<3&&S.mode!=='testout'){S.items.push({...it,retry:true,seed:it.seed+101,key:it.key});S.retried++}
   S.state='feedback';foot.className='s-foot '+(res.ok?'ok':'bad');
-  fb.innerHTML=`<h3>${res.ok?IC.check:IC.x}${res.ok?PRAISE[S.i%PRAISE.length]:'Not quite. Here’s how it goes:'}</h3>${res.ok&&!['first','recite','sayline'].includes(it.kind)?'':`<div class="ans">${res.ans}</div>`}${!res.ok&&!it.retry&&S.mode!=='testout'?'<p class="note">You’ll see this one again at the end.</p>':''}`;
+  fb.innerHTML=`<h3>${res.ok?IC.check:IC.x}${res.ok?PRAISE[S.i%PRAISE.length]:'Not quite. Here’s how it goes:'}</h3>${res.ok&&res.typo?`<p class="typo">${res.typo}</p>`:''}${res.ok&&!['first','recite','sayline'].includes(it.kind)?'':`<div class="ans">${res.ans}</div>`}${!res.ok&&!it.retry&&S.mode!=='testout'?'<p class="note">You’ll see this one again at the end.</p>':''}`;
   fb.hidden=false;btn.textContent='Continue';btn.disabled=false;btn.focus({preventScroll:true});
   $('#sBar').style.width=((S.i+1)/S.items.length*100)+'%'}
 function next(){stopAll();S.i++;if(S.i>=S.items.length)finish();else showEx()}
