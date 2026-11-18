@@ -520,25 +520,35 @@ async function initCaps(){
   if(!TTS&&'speechSynthesis' in window)TTS=deviceVoice();
   if(TTS)document.body.classList.add('has-tts')}
 function listening(){return !!(DICT&&DICT.active())||!!REC}
-/* Ends the phone's recognizer right away and resets the button, without waiting for the phone to confirm
-   (iPhones sometimes never confirm, which used to leave the microphone stuck). */
-function endRec(){if(!REC)return;const r=REC;REC=null;clearTimeout(r._idle);try{r.stop()}catch(e){}setTimeout(()=>{try{r.abort()}catch(e){}},600);const k=r._sink;if(k){k.state(false)}}
-function stopListening(){try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}endRec()}
+/* One shared speech listener for the whole app (iPhones behave as if there is only one).
+   REC is the current listening session; RUNNING says whether the phone's listener is still active. */
+let RECI=null,RUNNING=false,MICWAIT=null,STOPS=0;
+function recInstance(){if(RECI)return RECI;const r=new SR();r.lang='en-US';r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
+  r.onresult=e=>{const ses=REC;if(!ses)return;let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript;else part+=x[0].transcript}
+    if(fin||part){ses.heard=true;recIdle(ses)}if(fin)ses.sink.final(' '+fin.trim());ses.sink.partial(part)};
+  r.onerror=e=>{const ses=REC,c=e.error;if(c==='aborted')return;if(ses)endRec(true);if(c==='no-speech'&&ses&&ses.heard)return;
+    if(ses||c!=='no-speech')micError({'not-allowed':'not_granted','service-not-allowed':'not_granted','audio-capture':'not_granted','no-speech':'no_speech','network':'network'}[c]||'upstream_error')};
+  /* A stop we asked for earlier can report in late; it must not switch off a newer recording. */
+  r.onend=()=>{if(STOPS>0){STOPS--;if(!REC)RUNNING=false;if(MICWAIT){const p=MICWAIT;MICWAIT=null;RUNNING=false;beginRec(p)}return}
+    RUNNING=false;if(REC)endRec(true);if(MICWAIT){const p=MICWAIT;MICWAIT=null;beginRec(p)}};
+  return RECI=r}
+function recIdle(ses){clearTimeout(ses.idle);ses.idle=setTimeout(()=>{if(REC!==ses)return;const quiet=!ses.heard;endRec();if(quiet&&ses.sink.nothing)ses.sink.nothing()},ses.heard?5000:7000)}
+function beginRec(ses){const r=recInstance();REC=ses;ses.sink.state(true);recIdle(ses);
+  try{r.start();RUNNING=true}catch(e){try{r.abort();STOPS=1}catch(_){}RUNNING=false;setTimeout(()=>{if(REC!==ses)return;try{r.start();RUNNING=true}catch(_){endRec(true);micError('upstream_error')}},300)}}
+/* Ends listening right away and resets the button, without waiting for the phone to confirm. */
+function endRec(fromPhone){if(!REC)return;const ses=REC;REC=null;clearTimeout(ses.idle);if(!fromPhone&&RECI&&RUNNING){try{RECI.stop();STOPS=1}catch(e){}}ses.sink.state(false)}
+function stopListening(){try{if(DICT&&DICT.active())DICT.stop().catch(()=>{})}catch(e){}MICWAIT=null;endRec()}
 function micError(code){const m={not_granted:'The microphone didn’t start. Tap it to try again, or type your answer (your keyboard’s microphone key works too).',dismissed:'Tap the microphone again when you’re ready.',unavailable:'Voice input isn’t available here. You can type instead.',rate_limited:'Voice input is busy. Try again in a moment.',no_speech:'I didn’t catch that. Tap the microphone and try again.',network:'Voice input needs an internet connection.',stopped:''}[code];
   if(m!=='')toast(m||'The microphone stopped. Tap it to try again, or type your answer.')}
 function micToggle(sink){
   if(DICT){if(DICT.active()){DICT.stop().catch(()=>{});return}SINK=sink;DICT.start().catch(e=>micError(e.code));return}
   if(REC){endRec();return}
+  if(MICWAIT){MICWAIT=null;sink.state(false);return}
   if(!SR){micError('unavailable');return}
-  SINK=sink;let rec;try{rec=new SR()}catch(e){micError('unavailable');return}
-  rec._sink=sink;let heard=false;
-  const idle=()=>{clearTimeout(rec._idle);rec._idle=setTimeout(()=>{if(REC===rec)endRec()},heard?5000:9000)};
-  rec.lang='en-US';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
-  rec.onresult=e=>{if(REC!==rec)return;let fin='',part='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)fin+=r[0].transcript;else part+=r[0].transcript}
-    if(fin||part){heard=true;idle()}if(fin)sink.final(' '+fin.trim());sink.partial(part)};
-  rec.onerror=e=>{if(REC!==rec)return;const c=e.error;endRec();if(c==='aborted'||(c==='no-speech'&&heard))return;micError({'not-allowed':'not_granted','service-not-allowed':'not_granted','audio-capture':'not_granted','no-speech':'no_speech','network':'network'}[c]||'upstream_error')};
-  rec.onend=()=>{if(REC===rec)endRec()};
-  try{rec.start();REC=rec;sink.state(true);idle()}catch(e){REC=null;micError('upstream_error')}}
+  SINK=sink;const ses={sink,heard:false};
+  try{recInstance()}catch(e){micError('unavailable');return}
+  if(RUNNING){MICWAIT=ses;sink.state(true);if(!STOPS){try{RECI.stop();STOPS=1}catch(e){}}setTimeout(()=>{if(MICWAIT===ses){MICWAIT=null;RUNNING=false;beginRec(ses)}},700);return}
+  beginRec(ses)}
 function speak(text){if(!TTS)return;stopTune();TTS.speak(text.replace(/[“”]/g,'')).catch(()=>{})}
 function stopAll(){stopTune();stopListening();try{TTS&&TTS.stop()}catch(e){}}
 function toast(msg){$$('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;t.setAttribute('role','status');document.body.appendChild(t);setTimeout(()=>t.remove(),3800)}
@@ -681,7 +691,7 @@ function exRecite(it){const v=V(it.vid),W=words(v);let root,api;const hints=v.ch
      <p class="partial" aria-live="polite"></p>
      <div class="row"><button class="btn mic needs-dict" data-mic>${IC.mic}<span>Say it aloud</span></button>${it.p?'':`<button class="btn small quiet" data-hints>${IC.eye}<span>Show first letters</span></button>`}${humBtn()}</div>
      <p class="note needs-nodict">Tip: on a phone, your keyboard’s microphone key works here too.</p>`,
-   mount(rt,a){root=rt;api=a;const ta=$('textarea',root),pe=$('.partial',root),mb=$('[data-mic]',root);const sink={long:true,final(t){ta.value=ta.value?ta.value+t:t.trimStart();ta.dispatchEvent(new Event('input',{bubbles:true}))},partial(t){pe.textContent=t},state(on){if(mb){mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap to stop':'Say it aloud'}}};
+   mount(rt,a){root=rt;api=a;const ta=$('textarea',root),pe=$('.partial',root),mb=$('[data-mic]',root);const sink={long:true,nothing(){toast('I couldn’t hear anything. Try the microphone again, or use your keyboard’s microphone key in the box.');ta.focus()},final(t){ta.value=ta.value?ta.value+t:t.trimStart();ta.dispatchEvent(new Event('input',{bubbles:true}))},partial(t){pe.textContent=t},state(on){if(mb){mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap to stop':'Say it aloud'}}};
      ta.addEventListener('input',()=>api.ready(ta.value.trim().split(/\s+/).length>=Math.min(3,W.length)));
      root.addEventListener('click',e=>{if(e.target.closest('[data-mic]'))micToggle(sink);
        if(e.target.closest('[data-hints]')){$('.hints',root).hidden=false;e.target.closest('[data-hints]').remove()}
@@ -727,9 +737,9 @@ function speakUI(label){return `<div class="speak"><button class="btn primary bi
   <label class="note" for="sayIn"><span class="needs-dict">Or type it instead:</span><span class="needs-nodict">Type it, or tap your keyboard’s microphone key and say it:</span></label>
   <input id="sayIn" class="name-in say-in" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>`}
 function speakMount(root,api,onText,long){const mb=$('[data-smic]',root),pe=$('.partial',root),inp=$('.say-in',root),lbl=mb.querySelector('span').textContent;let said='';
-  const all=()=>(said+' '+inp.value+' '+pe.textContent).trim(),update=()=>onText(all());
+  const all=()=>(said+' '+inp.value+' '+(pe.textContent==='Go ahead and speak…'?'':pe.textContent)).trim(),update=()=>onText(all());
   let last='';
-  const sink={long,final(t){said+=t;last='';pe.textContent='';update()},partial(t){if(!t&&last){said+=' '+last}last=t;pe.textContent=t;update()},state(on){if(!on&&last){said+=' '+last;last='';pe.textContent='';update()}mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap when you’re done':lbl}};
+  const sink={long,nothing(){toast('I couldn’t hear anything. Try the microphone again, or tap the box below and use your keyboard’s microphone key.');inp.focus()},final(t){said+=t;last='';pe.textContent='';update()},partial(t){if(!t&&last){said+=' '+last}last=t;pe.textContent=t;update()},state(on){if(!on&&last){said+=' '+last;last='';pe.textContent='';update()}mb.classList.toggle('on',on);mb.querySelector('span').textContent=on?'Listening… tap when you’re done':lbl;if(on&&!pe.textContent)pe.textContent='Go ahead and speak…';if(!on&&pe.textContent==='Go ahead and speak…')pe.textContent=''}};
   mb.addEventListener('click',()=>{if(S&&S.state==='answer')micToggle(sink)});
   inp.addEventListener('input',update);
   inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();api.ready(!!all());api.submit()}});
